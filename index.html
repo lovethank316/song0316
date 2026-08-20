@@ -3,176 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>노래 제목 맞추기 게임 (Part 1 & 5)</title>
+    <title>🎵 섭리 명곡 맞추기</title>
     <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-grad: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
         }
+
         body {
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f0f2f5;
+            background: var(--bg-grad);
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
             padding: 20px;
+            color: var(--text-main);
         }
-        .game-card {
-            background-color: #ffffff;
+
+        .container {
+            background: var(--card-bg);
             width: 100%;
             max-width: 480px;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header {
             text-align: center;
+            margin-bottom: 24px;
         }
-        h1 {
-            font-size: 24px;
-            color: #1a1a1a;
-            margin-bottom: 8px;
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-        .subtitle {
-            font-size: 13px;
-            color: #4f46e5;
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* 시작 화면 */
+        .start-group {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .select-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f1f5f9;
+            padding: 12px 16px;
+            border-radius: 12px;
+        }
+
+        select {
+            border: none;
+            background: transparent;
+            font-size: 16px;
             font-weight: 600;
-            margin-bottom: 15px;
+            color: var(--primary);
+            outline: none;
+            cursor: pointer;
         }
-        .status-bar {
+
+        /* 게임 화면 */
+        .status-board {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 16px 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .status-item .label {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+        }
+
+        .status-item .value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .player-card {
+            background: #f1f5f9;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-sub);
             font-size: 14px;
-            color: #666;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
         }
-        .music-player {
-            background-color: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px 15px;
-            margin-bottom: 25px;
-        }
-        .disc-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-            display: inline-block;
-        }
-        .disc-icon.playing {
-            animation: spin 3s linear infinite;
-        }
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
-        .controls button {
-            background-color: #4f46e5;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 30px;
+
+        input[type="range"] {
+            accent-color: var(--primary);
             cursor: pointer;
-            transition: background-color 0.2s;
         }
-        .controls button:hover {
-            background-color: #4338ca;
+
+        .hint-box {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 16px;
+            display: none;
         }
+
         .input-group {
             display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 12px;
         }
+
         input[type="text"] {
             flex: 1;
-            padding: 12px 16px;
-            font-size: 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
             outline: none;
             transition: border-color 0.2s;
         }
+
         input[type="text"]:focus {
-            border-color: #4f46e5;
+            border-color: var(--primary);
         }
-        .btn-submit {
-            background-color: #10b981;
+
+        .notice {
+            font-size: 12px;
+            color: var(--text-sub);
+            text-align: center;
+        }
+
+        /* 결과 화면 */
+        .result-card {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .result-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .tier-badge {
+            font-size: 22px;
+            font-weight: 700;
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border-radius: 50px;
+            display: inline-block;
+            margin: 12px 0;
+            color: var(--primary);
+        }
+
+        .score-display {
+            font-size: 40px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .result-ment {
+            color: var(--text-sub);
+            font-size: 15px;
+            margin-bottom: 24px;
+        }
+
+        /* 공통 버튼 */
+        .btn {
+            background: var(--primary);
             color: white;
             border: none;
-            padding: 0 20px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-        .btn-submit:hover {
-            background-color: #059669;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        .btn-secondary {
-            flex: 1;
-            padding: 10px;
-            background-color: #f3f4f6;
-            color: #4b5563;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
-        .btn-secondary:hover {
-            background-color: #e5e7eb;
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
         }
-        .message {
-            margin-top: 15px;
-            font-weight: 600;
-            min-height: 24px;
-        }
-        .message.correct { color: #10b981; }
-        .message.wrong { color: #ef4444; }
-        .message.info { color: #6b7280; }
-        
+
+        .btn-full { width: 100%; padding: 16px; font-size: 16px; }
+        .btn-sub { background: #e2e8f0; color: var(--text-main); }
+        .btn-sub:hover { background: #cbd5e1; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-warning:hover { filter: brightness(0.9); }
+
         audio { display: none; }
     </style>
 </head>
 <body>
 
-<div class="game-card">
-    <h1>🎵 노래 제목 맞추기</h1>
-    <div class="subtitle">PART 1 & PART 5 모음</div>
-    
-    <div class="status-bar">
-        <span>진행: <strong id="currentCount">1</strong> / <span id="totalCount">0</span></span>
-        <span>점수: <strong id="score">0</strong>점</span>
+<div class="container">
+    <div class="header">
+        <h1>🎵 섭리 명곡 맞추기</h1>
     </div>
 
-    <div class="music-player">
-        <div class="disc-icon" id="disc">📻</div>
-        <div class="controls">
-            <button id="playBtn">▶️ 노래 듣기</button>
+    <!-- 1. 게임 시작 화면 -->
+    <div id="startScreen" class="screen active">
+        <div class="start-group">
+            <div class="select-wrapper">
+                <span>제한 시간 설정</span>
+                <select id="timeSelect">
+                    <option value="60">1분</option>
+                    <option value="120">2분</option>
+                    <option value="180">3분</option>
+                </select>
+            </div>
+            <button class="btn btn-full" id="startBtn">🎮 게임 시작</button>
         </div>
+    </div>
+
+    <!-- 2. 게임 진행 화면 -->
+    <div id="gameScreen" class="screen">
+        <div class="status-board">
+            <div class="status-item">
+                <span class="label">⏱️ 남은 시간</span>
+                <span class="value" id="timer">01:00</span>
+            </div>
+            <div class="status-item">
+                <span class="label">🎯 맞춘 개수</span>
+                <span class="value" id="score">0개</span>
+            </div>
+        </div>
+
+        <div class="player-card">
+            <div class="controls-row">
+                <button class="btn btn-sub" id="pauseBtn">⏸️ 일시정지</button>
+                <button class="btn" id="play30Btn">▶️ 30초 듣기</button>
+            </div>
+            <div class="volume-control">
+                <span>🔊</span>
+                <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.8">
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 16px;">
+            <button class="btn btn-warning" id="hintBtn">💡 힌트 보기</button>
+        </div>
+        <div class="hint-box" id="hintBox"></div>
+
+        <div class="input-group">
+            <input type="text" id="answerInput" placeholder="정답 입력 (빈칸 시 엔터 2번 = 패스)" autocomplete="off">
+            <button class="btn" id="submitBtn">확인</button>
+        </div>
+        <p class="notice">* 띄어쓰기는 틀려도 글자만 맞으면 정답 처리됩니다.</p>
+        
         <audio id="audioPlayer"></audio>
     </div>
 
-    <div class="input-group">
-        <input type="text" id="answerInput" placeholder="노래 제목을 입력하세요..." autocomplete="off">
-        <button class="btn-submit" id="submitBtn">확인</button>
+    <!-- 3. 게임 종료 화면 -->
+    <div id="resultScreen" class="screen">
+        <div class="result-card">
+            <div class="result-title">게임 종료!</div>
+            <div class="score-display" id="finalScore">0개</div>
+            <div class="tier-badge" id="tierBadge">🥉 브론즈</div>
+            <p class="result-ment" id="resultMent">조금 더 도전해보세요!</p>
+            <button class="btn btn-full" id="restartBtn">🔄 다시 하기</button>
+        </div>
     </div>
-
-    <div class="action-buttons">
-        <button class="btn-secondary" id="skipBtn">⏭️ 패스 (정답 확인)</button>
-        <button class="btn-secondary" id="nextBtn" style="display:none; background-color:#4f46e5; color:white;">다음 문제 ➡️</button>
-    </div>
-
-    <div class="message" id="message"></div>
 </div>
 
 <script>
-// Part 1 및 Part 5 곡 목록 (경로에 폴더명 지정)
+// Part 1 & Part 5 곡 목록 데이터
 const playlist = [
   // --- PART 1 ---
   { title: "My Way remix", src: "part1/My Way remix.mp3" },
@@ -210,65 +370,11 @@ const playlist = [
   { title: "기도합니다", src: "part1/기도합니다.mp3" },
   { title: "기적의 날씨", src: "part1/기적의 날씨.mp3" },
   { title: "기적의 역사다", src: "part1/기적의 역사다.mp3" },
-  { title: "기회는 한 번이다 믿고 따르라 (feat. Joshua Jeong Piano )", src: "part1/기회는 한 번이다 믿고 따르라 (feat. Joshua Jeong Piano ).mp3" },
   { title: "길 잃은 사람, 길 찾은 사람", src: "part1/길 잃은 사람, 길 찾은 사람.mp3" },
   { title: "깊어 가는 여름밤", src: "part1/깊어 가는 여름밤.mp3" },
   { title: "깨끗한 계곡에서", src: "part1/깨끗한 계곡에서.mp3" },
   { title: "깨닫도록 하였다", src: "part1/깨닫도록 하였다.mp3" },
   { title: "깨달아라", src: "part1/깨달아라.mp3" },
-  { title: "꽃을 꺾어 성령님께", src: "part1/꽃을 꺾어 성령님께.mp3" },
-  { title: "꿈을 이루는 길", src: "part1/꿈을 이루는 길.mp3" },
-  { title: "끝까지 가 보니 깨달았네", src: "part1/끝까지 가 보니 깨달았네.mp3" },
-  { title: "끝까지 가렵니다", src: "part1/끝까지 가렵니다.mp3" },
-  { title: "끝까지", src: "part1/끝까지.mp3" },
-  { title: "끝이 오기 전에", src: "part1/끝이 오기 전에.mp3" },
-  { title: "나 여호와가 너희를 책망한다", src: "part1/나 여호와가 너희를 책망한다.mp3" },
-  { title: "나는 가리로다", src: "part1/나는 가리로다.mp3" },
-  { title: "나는 너를 믿고 너는 나를 믿자", src: "part1/나는 너를 믿고 너는 나를 믿자.mp3" },
-  { title: "나는 돌아왔네, 나는 뛰었네", src: "part1/나는 돌아왔네, 나는 뛰었네.mp3" },
-  { title: "나는 소나무야", src: "part1/나는 소나무야.mp3" },
-  { title: "나는 좋아요", src: "part1/나는 좋아요.mp3" },
-  { title: "나는 주님만 생각합니다", src: "part1/나는 주님만 생각합니다.mp3" },
-  { title: "나는 행복하다3", src: "part1/나는 행복하다3.mp3" },
-  { title: "나를 따라오라", src: "part1/나를 따라오라.MP3" },
-  { title: "나를 만났으면 끝이다", src: "part1/나를 만났으면 끝이다.mp3" },
-  { title: "나를 인도해주세요", src: "part1/나를 인도해주세요.mp3" },
-  { title: "나무와 나", src: "part1/나무와 나.mp3" },
-  { title: "나와 같이 가고 와야한다", src: "part1/나와 같이 가고 와야한다.mp3" },
-  { title: "나와 같이 동행하십니다", src: "part1/나와 같이 동행하십니다.mp3" },
-  { title: "나와 다투지 말아라", src: "part1/나와 다투지 말아라.mp3" },
-  { title: "나와 부딪치지 말아라", src: "part1/나와 부딪치지 말아라.mp3" },
-  { title: "나의 갈 길 다 가도록", src: "part1/나의 갈 길 다 가도록.mp3" },
-  { title: "나의 기도", src: "part1/나의 기도.mp3" },
-  { title: "나의 마음은 변함이 없어요", src: "part1/나의 마음은 변함이 없어요.mp3" },
-  { title: "나의 모든 것 사랑하기 때문에 주셨어요", src: "part1/나의 모든 것 사랑하기 때문에 주셨어요.mp3" },
-  { title: "나의 인생의 날은 간다", src: "part1/나의 인생의 날은 간다.mp3" },
-  { title: "낙심하지 말아라", src: "part1/낙심하지 말아라.mp3" },
-  { title: "날 기다리다 가신 어머님", src: "part1/날 기다리다 가신 어머님.mp3" },
-  { title: "날 불러줘요", src: "part1/날 불러줘요.mp3" },
-  { title: "날 좀 봐요", src: "part1/날 좀 봐요.mp3" },
-  { title: "날아가는 삶", src: "part1/날아가는 삶.mp3" },
-  { title: "날이 새도록 읊어보자", src: "part1/날이 새도록 읊어보자.mp3" },
-  { title: "내 갈길", src: "part1/내 갈길.mp3" },
-  { title: "내 고향 초가집", src: "part1/내 고향 초가집.mp3" },
-  { title: "내 님이 최고야", src: "part1/내 님이 최고야.mp3" },
-  { title: "내 어릴 적 다니던 이 길은", src: "part1/내 어릴 적 다니던 이 길은.mp3" },
-  { title: "내 인생 Acoustic Ver.", src: "part1/내 인생 Acoustic Ver..mp3" },
-  { title: "내 인생", src: "part1/내 인생.mp3" },
-  { title: "내가 길이다 생명이다 Ver.1", src: "part1/내가 길이다 생명이다 Ver.1.mp3" },
-  { title: "내가 길이다 생명이다 Ver.2", src: "part1/내가 길이다 생명이다 Ver.2.mp3" },
-  { title: "내가 따라가는 성령님은 아시니까요", src: "part1/내가 따라가는 성령님은 아시니까요.mp3" },
-  { title: "내가 저 하늘의 구름이라면", src: "part1/내가 저 하늘의 구름이라면.mp3" },
-  { title: "내가 택한 자", src: "part1/내가 택한 자.mp3" },
-  { title: "내가 한다면 속 시원히", src: "part1/내가 한다면 속 시원히.mp3" },
-  { title: "너 너 너 이상해", src: "part1/너 너 너 이상해.mp3" },
-  { title: "너 지금 무슨 생각을 하고 있느냐", src: "part1/너 지금 무슨 생각을 하고 있느냐.mp3" },
-  { title: "너는 너고 나는 나야", src: "part1/너는 너고 나는 나야.mp3" },
-  { title: "너희는 듣고 보고 배우고서 행하여라", src: "part1/너희는 듣고 보고 배우고서 행하여라.mp3" },
-  { title: "네 모습이 아름답다", src: "part1/네 모습이 아름답다.mp3" },
-  { title: "네가 네가 잘되고 형통하리라", src: "part1/네가 네가 잘되고 형통하리라.mp3" },
-  { title: "노력하고 연구하여라", src: "part1/노력하고 연구하여라.mp3" },
-  { title: "높은 산을 올라왔다", src: "part1/높은 산을 올라왔다.mp3" },
 
   // --- PART 5 ---
   { title: "추부 IC", src: "part5/추부 IC.mp3" },
@@ -281,193 +387,202 @@ const playlist = [
   { title: "하나님 마음에 드는 삶", src: "part5/하나님 마음에 드는 삶.mp3" },
   { title: "하나님 말씀대로 살았네", src: "part5/하나님 말씀대로 살았네.mp3" },
   { title: "하나님 몸이 되어서", src: "part5/하나님 몸이 되어서.mp3" },
-  { title: "하나님 성령님 기쁘게 하자", src: "part5/하나님 성령님 기쁘게 하자.mp3" },
-  { title: "하나님 성령님 배가 되어 건너왔네", src: "part5/하나님 성령님 배가 되어 건너왔네.mp3" },
-  { title: "하나님 성령님 부르면서 기도하여라", src: "part5/하나님 성령님 부르면서 기도하여라.mp3" },
-  { title: "하나님 성령님 성자 함께 살아가면서", src: "part5/하나님 성령님 성자 함께 살아가면서.mp3" },
-  { title: "하나님 성령님 성자의 사랑은", src: "part5/하나님 성령님 성자의 사랑은.mp3" },
-  { title: "하나님 성령님 없이는 못 살아요", src: "part5/하나님 성령님 없이는 못 살아요.mp3" },
-  { title: "하나님 성령님 저 생명 잡아 주세요", src: "part5/하나님 성령님 저 생명 잡아 주세요.MP3" },
-  { title: "하나님 역사는 성지 땅에서 빛이 난다", src: "part5/하나님 역사는 성지 땅에서 빛이 난다.mp3" },
-  { title: "하나님 주신 말씀 맛있게 (Original R Ver.)", src: "part5/하나님 주신 말씀 맛있게 (Original R Ver.).MP3" },
-  { title: "하나님 주신 말씀 맛있게", src: "part5/하나님 주신 말씀 맛있게.mp3" },
   { title: "하나님의 약속", src: "part5/하나님의 약속.mp3" },
-  { title: "하나님의 역사", src: "part5/하나님의 역사.mp3" },
-  { title: "하나님의 전 자연성전", src: "part5/하나님의 전 자연성전.mp3" },
   { title: "하늘의 능력을 날마다 보며", src: "part5/하늘의 능력을 날마다 보며.mp3" },
   { title: "하면 되는 거야", src: "part5/하면 되는 거야.mp3" },
-  { title: "하면 된다 안 하면 안 된다", src: "part5/하면 된다 안 하면 안 된다.mp3" },
-  { title: "한 가지만 생각하고 행하지 말아라", src: "part5/한 가지만 생각하고 행하지 말아라.mp3" },
   { title: "한 알의 밀알로", src: "part5/한 알의 밀알로.mp3" },
-  { title: "한마음으로 따라갑니다", src: "part5/한마음으로 따라갑니다.mp3" },
   { title: "할 때 해야 된다", src: "part5/할 때 해야 된다.mp3" },
-  { title: "할 때 해야 한다", src: "part5/할 때 해야 한다.mp3" },
-  { title: "할 일을 모두 마치고서", src: "part5/할 일을 모두 마치고서.mp3" },
-  { title: "해가 기운다", src: "part5/해가 기운다.mp3" },
-  { title: "행복은 간다", src: "part5/행복은 간다.mp3" },
   { title: "행하고 달려라", src: "part5/행하고 달려라.mp3" },
-  { title: "행하기만 하면은", src: "part5/행하기만 하면은.mp3" },
-  { title: "행하는 기회", src: "part5/행하는 기회.mp3" },
-  { title: "행하는 대로", src: "part5/행하는 대로.mp3" },
-  { title: "행하는 자가 영웅이야", src: "part5/행하는 자가 영웅이야.mp3" },
-  { title: "행한 대로 갚아주마", src: "part5/행한 대로 갚아주마.mp3" },
-  { title: "허무한 것은 날려버리고", src: "part5/허무한 것은 날려버리고.mp3" },
   { title: "형통의 길", src: "part5/형통의 길.mp3" },
-  { title: "혼인 잔치 문이 열렸네", src: "part5/혼인 잔치 문이 열렸네.mp3" },
-  { title: "혼인 잔치 휴거의 역사", src: "part5/혼인 잔치 휴거의 역사.mp3" },
-  { title: "화평의 세계다", src: "part5/화평의 세계다.mp3" },
   { title: "황금천국 삶", src: "part5/황금천국 삶.mp3" },
-  { title: "황막한 광야를 달리는 인생아", src: "part5/황막한 광야를 달리는 인생아.mp3" },
-  { title: "휴거는 사랑이다", src: "part5/휴거는 사랑이다.mp3" },
-  { title: "희망의 천 년 역사 신부들", src: "part5/희망의 천 년 역사 신부들.mp3" },
-  { title: "힘으로 존재한다", src: "part5/힘으로 존재한다.mp3" }
+  { title: "휴거는 사랑이다", src: "part5/휴거는 사랑이다.mp3" }
 ];
 
-// 게임 변수
-let gameList = [];
+// 변수 설정
+let shuffledList = [];
 let currentIndex = 0;
 let score = 0;
-let isAnswered = false;
+let timer = null;
+let timeLeft = 60;
+let emptyEnterCount = 0;
 
-// DOM 요소
+// Element 로드
+const startScreen = document.getElementById('startScreen');
+const gameScreen = document.getElementById('gameScreen');
+const resultScreen = document.getElementById('resultScreen');
+
+const timeSelect = document.getElementById('timeSelect');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+
+const timerEl = document.getElementById('timer');
+const scoreEl = document.getElementById('score');
 const audioPlayer = document.getElementById('audioPlayer');
-const playBtn = document.getElementById('playBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const play30Btn = document.getElementById('play30Btn');
+const volumeSlider = document.getElementById('volumeSlider');
+
+const hintBtn = document.getElementById('hintBtn');
+const hintBox = document.getElementById('hintBox');
 const answerInput = document.getElementById('answerInput');
 const submitBtn = document.getElementById('submitBtn');
-const skipBtn = document.getElementById('skipBtn');
-const nextBtn = document.getElementById('nextBtn');
-const message = document.getElementById('message');
-const currentCountEl = document.getElementById('currentCount');
-const totalCountEl = document.getElementById('totalCount');
-const scoreEl = document.getElementById('score');
-const disc = document.getElementById('disc');
 
-// Shuffle 함수
-function shuffle(array) {
-    return array.sort(() => Math.random() - 0.5);
+const finalScore = document.getElementById('finalScore');
+const tierBadge = document.getElementById('tierBadge');
+const resultMent = document.getElementById('resultMent');
+
+// 셔플 함수
+function shuffle(arr) {
+    return arr.sort(() => Math.random() - 0.5);
 }
 
-// 초기화
-function initGame() {
-    gameList = shuffle([...playlist]);
-    currentIndex = 0;
+// 화면 전환
+function showScreen(screen) {
+    [startScreen, gameScreen, resultScreen].forEach(s => s.classList.remove('active'));
+    screen.classList.add('active');
+}
+
+// 게임 시작
+startBtn.addEventListener('click', () => {
+    timeLeft = parseInt(timeSelect.value);
     score = 0;
+    currentIndex = 0;
+    shuffledList = shuffle([...playlist]);
     
-    totalCountEl.textContent = gameList.length;
-    scoreEl.textContent = score;
+    scoreEl.textContent = `${score}개`;
+    updateTimerDisplay();
     
-    loadSong();
-}
-
-// 문제 로드
-function loadSong() {
-    isAnswered = false;
-    const currentSong = gameList[currentIndex];
+    showScreen(gameScreen);
+    nextQuestion();
     
-    audioPlayer.src = currentSong.src;
-    audioPlayer.load();
-    
-    currentCountEl.textContent = currentIndex + 1;
-    answerInput.value = '';
-    answerInput.disabled = false;
-    submitBtn.disabled = false;
-    
-    message.textContent = '';
-    message.className = 'message';
-    
-    nextBtn.style.display = 'none';
-    skipBtn.style.display = 'block';
-    playBtn.textContent = '▶️ 노래 듣기';
-    disc.classList.remove('playing');
-}
-
-// 재생/일시정지
-playBtn.addEventListener('click', () => {
-    if (audioPlayer.paused) {
-        audioPlayer.play().then(() => {
-            playBtn.textContent = '⏸️ 일시정지';
-            disc.classList.add('playing');
-        }).catch(err => {
-            alert("음원을 찾을 수 없습니다: " + gameList[currentIndex].src);
-        });
-    } else {
-        audioPlayer.pause();
-        playBtn.textContent = '▶️ 노래 듣기';
-        disc.classList.remove('playing');
-    }
+    clearInterval(timer);
+    timer = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) {
+            endGame();
+        }
+    }, 1000);
 });
 
-audioPlayer.addEventListener('ended', () => {
-    playBtn.textContent = '▶️ 다시 듣기';
-    disc.classList.remove('playing');
-});
-
-// 정답 비교 정규화
-function cleanText(str) {
-    return str.replace(/[\s\?\!\.\,\~\(\)\-_]/g, "").toLowerCase();
+function updateTimerDisplay() {
+    const min = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+    const sec = String(timeLeft % 60).padStart(2, '0');
+    timerEl.textContent = `${min}:${sec}`;
 }
 
-// 정답 확인
-function checkAnswer() {
-    if (isAnswered) return;
-    
-    const userInput = answerInput.value.trim();
-    if (!userInput) {
-        message.textContent = '노래 제목을 입력해 주세요!';
-        message.className = 'message info';
+// 다음 문제 로드
+function nextQuestion() {
+    if (currentIndex >= shuffledList.length) {
+        endGame();
         return;
     }
     
-    const currentSong = gameList[currentIndex];
+    hintBox.style.display = 'none';
+    answerInput.value = '';
+    emptyEnterCount = 0;
     
-    if (cleanText(userInput) === cleanText(currentSong.title)) {
-        score += 10;
-        scoreEl.textContent = score;
-        message.textContent = `🎉 정답입니다! (${currentSong.title})`;
-        message.className = 'message correct';
-        finishCurrentTurn();
-    } else {
-        message.textContent = '❌ 틀렸습니다. 다시 시도해보세요!';
-        message.className = 'message wrong';
-    }
+    const currentSong = shuffledList[currentIndex];
+    audioPlayer.src = currentSong.src;
+    audioPlayer.volume = volumeSlider.value;
+    audioPlayer.play().catch(e => console.log('Auto play blocked'));
 }
 
-function finishCurrentTurn() {
-    isAnswered = true;
-    answerInput.disabled = true;
-    submitBtn.disabled = true;
-    skipBtn.style.display = 'none';
-    nextBtn.style.display = 'block';
-}
-
-// 패스
-skipBtn.addEventListener('click', () => {
-    if (isAnswered) return;
-    const currentSong = gameList[currentIndex];
-    message.textContent = `💡 정답은 [ ${currentSong.title} ] 입니다!`;
-    message.className = 'message info';
-    finishCurrentTurn();
-});
-
-// 다음 문제
-nextBtn.addEventListener('click', () => {
-    audioPlayer.pause();
-    currentIndex++;
-    
-    if (currentIndex >= gameList.length) {
-        alert(`게임 완료! 👏\n총 점수: ${score}점`);
-        initGame();
+// 오디오 제어
+pauseBtn.addEventListener('click', () => {
+    if (audioPlayer.paused) {
+        audioPlayer.play();
+        pauseBtn.textContent = '⏸️ 일시정지';
     } else {
-        loadSong();
+        audioPlayer.pause();
+        pauseBtn.textContent = '▶️ 재생';
     }
 });
+
+play30Btn.addEventListener('click', () => {
+    audioPlayer.currentTime = 0;
+    audioPlayer.play();
+    setTimeout(() => {
+        audioPlayer.pause();
+    }, 30000);
+});
+
+volumeSlider.addEventListener('input', (e) => {
+    audioPlayer.volume = e.target.value;
+});
+
+// 힌트 보기
+hintBtn.addEventListener('click', () => {
+    const title = shuffledList[currentIndex].title;
+    hintBox.textContent = `💡 힌트: 글자 수 [${title.length}글자] / 첫 글자 [${title[0]}]`;
+    hintBox.style.display = 'block';
+});
+
+// 정답 확인
+function checkAnswer() {
+    const input = answerInput.value.trim();
+    
+    // 빈칸 엔터 2번 시 패스 처리
+    if (!input) {
+        emptyEnterCount++;
+        if (emptyEnterCount >= 2) {
+            currentIndex++;
+            nextQuestion();
+        }
+        return;
+    }
+    
+    emptyEnterCount = 0;
+    const cleanUser = input.replace(/[\s\?\!\.\,\~\(\)\-_]/g, "").toLowerCase();
+    const cleanTarget = shuffledList[currentIndex].title.replace(/[\s\?\!\.\,\~\(\)\-_]/g, "").toLowerCase();
+    
+    if (cleanUser === cleanTarget) {
+        score++;
+        scoreEl.textContent = `${score}개`;
+        currentIndex++;
+        nextQuestion();
+    } else {
+        answerInput.value = '';
+        answerInput.placeholder = '❌ 틀렸습니다! 다시 입력하세요';
+        setTimeout(() => {
+            answerInput.placeholder = '정답 입력 (빈칸 시 엔터 2번 = 패스)';
+        }, 1200);
+    }
+}
 
 submitBtn.addEventListener('click', checkAnswer);
 answerInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') checkAnswer();
 });
 
-initGame();
+// 게임 종료
+function endGame() {
+    clearInterval(timer);
+    audioPlayer.pause();
+    
+    finalScore.textContent = `${score}개`;
+    
+    // 티어 판정
+    if (score >= 15) {
+        tierBadge.textContent = '👑 마스터';
+        resultMent.textContent = '엄청난 실력이시네요! 섭리 명곡 완벽 마스터!';
+    } else if (score >= 10) {
+        tierBadge.textContent = '🥇 골드';
+        resultMent.textContent = '대단합니다! 상당한 내공의 소유자시군요!';
+    } else if (score >= 5) {
+        tierBadge.textContent = '🥈 실버';
+        resultMent.textContent = '좋은 성적입니다! 조금만 더 하면 골드 달성!';
+    } else {
+        tierBadge.textContent = '🥉 브론즈';
+        resultMent.textContent = '더 연습해서 다시 도전해보세요!';
+    }
+    
+    showScreen(resultScreen);
+}
+
+restartBtn.addEventListener('click', () => {
+    showScreen(startScreen);
+});
 </script>
 
 </body>
