@@ -150,6 +150,7 @@
             font-size: 20px;
             font-weight: 700;
             color: var(--text-main);
+            transition: color 0.3s ease; /* 색상 변경 시 부드럽게 */
         }
 
         .player-card {
@@ -426,7 +427,7 @@
 <div class="footer-version">BTEA</div>
 
 <script>
-// Part 1 & Part 5 곡 목록 데이터 (기존과 동일)
+// 곡 목록 데이터 (기존과 동일)
 const playlist = [
   { title: "My Way remix", src: "part1/My Way remix.mp3" },
   { title: "My way", src: "part1/My way.mp3" },
@@ -495,13 +496,14 @@ let shuffledList = [];
 let currentIndex = 0;
 let score = 0;
 let timer = null;
+let totalTime = 60; // 전체 시간 저장용 변수 추가
 let timeLeft = 60;
 let emptyEnterCount = 0;
 let wrongAttempts = 0;
 let isUnlimited = false;
-let currentMode = 'normal'; // 'normal' 또는 'special'
+let currentMode = 'normal';
 let maxPlaySeconds = 5; 
-let startPlayTime = 0; // 재생 시작 위치 추적
+let startPlayTime = 0; 
 
 // DOM Elements
 const screens = document.querySelectorAll('.screen');
@@ -517,8 +519,15 @@ const hintBox = document.getElementById('hintBox');
 const toastMessage = document.getElementById('toastMessage');
 const rankList = document.getElementById('rankList');
 
-// 셔플 함수
-function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+// 셔플 함수 (Fisher-Yates 알고리즘으로 완벽한 랜덤 구현)
+function shuffle(arr) {
+    const array = [...arr];
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
 
 // 화면 전환
 function showScreen(screenId) {
@@ -570,11 +579,15 @@ document.getElementById('startBtn').addEventListener('click', () => {
     const selectedTime = timeSelect.value;
     
     isUnlimited = (selectedTime === 'unlimited');
-    timeLeft = isUnlimited ? 0 : parseInt(selectedTime);
+    totalTime = isUnlimited ? 0 : parseInt(selectedTime); // 전체 시간 저장
+    timeLeft = totalTime;
+    
+    // 타이머 색상 리셋
+    timerEl.style.color = "var(--text-main)";
     
     score = 0;
     currentIndex = 0;
-    shuffledList = shuffle([...playlist]);
+    shuffledList = shuffle([...playlist]); // 업그레이드된 완벽한 셔플 적용
     updateScoreDisplay();
     
     if (isUnlimited) {
@@ -593,8 +606,17 @@ document.getElementById('startBtn').addEventListener('click', () => {
     nextQuestion();
 });
 
+// 타이머 업데이트 및 10% 빨간색 로직 추가
 function updateTimerDisplay() {
     if (isUnlimited) return;
+    
+    // 남은 시간이 전체 시간의 10% 이하일 때 빨간색으로 변경
+    if (totalTime > 0 && timeLeft <= (totalTime * 0.1)) {
+        timerEl.style.color = "var(--danger)";
+    } else {
+        timerEl.style.color = "var(--text-main)";
+    }
+
     const min = String(Math.floor(timeLeft / 60)).padStart(2, '0');
     const sec = String(timeLeft % 60).padStart(2, '0');
     timerEl.textContent = `${min}:${sec}`;
@@ -616,7 +638,6 @@ function nextQuestion() {
     audioPlayer.src = currentSong.src;
     audioPlayer.volume = document.getElementById('volumeSlider').value;
     
-    // 오디오 메타데이터(곡 길이)를 불러온 후 재생 시작
     audioPlayer.load();
     audioPlayer.onloadedmetadata = () => {
         playAudioLimit(5); 
@@ -627,7 +648,6 @@ function nextQuestion() {
 function playAudioLimit(seconds) {
     maxPlaySeconds = seconds;
     
-    // 재생 시작 위치 설정 (Special 모드: 50%, 일반 모드: 0%)
     if (currentMode === 'special' && audioPlayer.duration) {
         startPlayTime = audioPlayer.duration / 2;
     } else {
@@ -640,7 +660,6 @@ function playAudioLimit(seconds) {
 }
 
 audioPlayer.addEventListener('timeupdate', () => {
-    // 시작된 시간(startPlayTime)을 기준으로 제한 시간(maxPlaySeconds) 도달 시 정지
     if (audioPlayer.currentTime >= startPlayTime + maxPlaySeconds && !audioPlayer.paused) {
         audioPlayer.pause();
         document.getElementById('pauseBtn').textContent = '▶️ 재생 (5초)';
@@ -772,7 +791,7 @@ document.getElementById('saveRankBtn').addEventListener('click', () => {
     if(name) {
         const ranks = JSON.parse(localStorage.getItem('melodyRank') || '[]');
         let modeText = isUnlimited ? '무제한' : `${timeSelect.value}초`;
-        modeText += currentMode === 'special' ? ' (Special)' : ''; // 모드 구분을 위해 추가
+        modeText += currentMode === 'special' ? ' (Special)' : ''; 
         
         ranks.push({ name: name.substring(0, 8), score: score, mode: modeText });
         localStorage.setItem('melodyRank', JSON.stringify(ranks));
