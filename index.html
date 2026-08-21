@@ -314,6 +314,9 @@
             letter-spacing: 0.5px;
         }
     </style>
+    <!-- Firebase SDK 불러오기 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
@@ -427,6 +430,19 @@
 <div class="footer-version">BTEA</div>
 
 <script>
+    // 파이어베이스 설정 및 연결
+const firebaseConfig = {
+    apiKey: "AIzaSyBCGLZrV-TKm66ZjA36WtHCC5RPcgIp3iE",
+    authDomain: "song0316-d3881.firebaseapp.com",
+    databaseURL: "https://song0316-d3881-default-rtdb.firebaseio.com",
+    projectId: "song0316-d3881",
+    storageBucket: "song0316-d3881.firebasestorage.app",
+    messagingSenderId: "31876563990",
+    appId: "1:31876563990:web:ff5b3faf9cdb75a3b96137"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 // 곡 목록 데이터 (기존과 동일)
 const playlist = [
   { title: "My Way remix", src: "part1/My Way remix.mp3" },
@@ -767,47 +783,90 @@ function endGame() {
     showScreen('resultScreen');
 }
 
-// 랭킹 시스템 로직
+// ==========================================
+// 파이어베이스 클라우드 랭킹 시스템
+// ==========================================
+
+// 순위표 불러오기
 function loadRanking() {
-    const ranks = JSON.parse(localStorage.getItem('melodyRank') || '[]');
-    rankList.innerHTML = '';
+    const rankList = document.getElementById('rankList');
+    if (!rankList) return;
+
+    rankList.innerHTML = '<li style="text-align:center; color:#94a3b8;">전 세계 데이터를 불러오는 중... ⏳</li>';
     
-    if(ranks.length === 0) {
-        rankList.innerHTML = '<li style="text-align:center; color:#94a3b8;">아직 등록된 기록이 없습니다.</li>';
-        return;
-    }
-    
-    ranks.sort((a, b) => b.score - a.score);
-    
-    ranks.forEach((r, idx) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<span>${idx + 1}위. ${r.name}</span> <span>${r.score}개 (${r.mode})</span>`;
-        rankList.appendChild(li);
+    database.ref('rankings').once('value', (snapshot) => {
+        const ranks = [];
+        snapshot.forEach((childSnapshot) => {
+            ranks.push(childSnapshot.val());
+        });
+        
+        // 높은 점수순 정렬
+        ranks.sort((a, b) => b.score - a.score);
+        
+        rankList.innerHTML = '';
+        
+        if (ranks.length === 0) {
+            rankList.innerHTML = '<li style="text-align:center; color:#94a3b8;">아직 등록된 기록이 없습니다. 첫 1위를 차지하세요!</li>';
+            return;
+        }
+        
+        // 상위 50명 표시
+        ranks.slice(0, 50).forEach((r, idx) => {
+            const li = document.createElement('li');
+            li.style.cssText = "display:flex; justify-content:space-between; padding:8px 12px; border-bottom:1px solid #334155;";
+            li.innerHTML = `
+                <span><strong>${idx + 1}위.</strong> ${r.name}</span>
+                <span style="color:#38bdf8; font-weight:bold;">${r.score}개 <small style="color:#94a3b8; font-weight:normal;">(${r.mode})</small></span>
+            `;
+            rankList.appendChild(li);
+        });
     });
 }
 
-document.getElementById('saveRankBtn').addEventListener('click', () => {
-    const name = prompt("순위표에 등록할 닉네임을 입력하세요 (최대 8글자):");
-    if(name) {
-        const ranks = JSON.parse(localStorage.getItem('melodyRank') || '[]');
-        let modeText = isUnlimited ? '무제한' : `${timeSelect.value}초`;
-        modeText += currentMode === 'special' ? ' (Special)' : ''; 
+// 순위표 저장 버튼
+const saveRankBtn = document.getElementById('saveRankBtn');
+if (saveRankBtn) {
+    saveRankBtn.addEventListener('click', () => {
+        const name = prompt("순위표에 등록할 닉네임을 입력하세요 (최대 8글자):");
         
-        ranks.push({ name: name.substring(0, 8), score: score, mode: modeText });
-        localStorage.setItem('melodyRank', JSON.stringify(ranks));
-        alert("기록이 저장되었습니다!");
-        document.getElementById('saveRankBtn').style.display = 'none'; 
-    }
-});
+        if (name && name.trim() !== '') {
+            let modeText = isUnlimited ? '무제한' : `${totalTime}초`;
+            if (typeof currentMode !== 'undefined' && currentMode === 'special') {
+                modeText += ' (Special)';
+            }
+            
+            database.ref('rankings').push({
+                name: name.trim().substring(0, 8),
+                score: score,
+                mode: modeText,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }, (error) => {
+                if (error) {
+                    alert("저장 실패: " + error.message);
+                } else {
+                    alert("🎉 전 세계 명예의 전당에 기록되었습니다!");
+                    saveRankBtn.style.display = 'none';
+                    loadRanking();
+                }
+            });
+        }
+    });
+}
 
 // 화면 이동 버튼들
-document.getElementById('restartBtn').addEventListener('click', () => showScreen('startScreen'));
-document.getElementById('viewRankBtn').addEventListener('click', () => {
-    loadRanking();
-    showScreen('rankScreen');
-});
-document.getElementById('backToStartBtn').addEventListener('click', () => showScreen('startScreen'));
+const restartBtn = document.getElementById('restartBtn');
+if (restartBtn) restartBtn.addEventListener('click', () => showScreen('startScreen'));
 
+const viewRankBtn = document.getElementById('viewRankBtn');
+if (viewRankBtn) {
+    viewRankBtn.addEventListener('click', () => {
+        loadRanking();
+        showScreen('rankScreen');
+    });
+}
+
+const backToStartBtn = document.getElementById('backToStartBtn');
+if (backToStartBtn) backToStartBtn.addEventListener('click', () => showScreen('startScreen'));
 </script>
 </body>
 </html>
