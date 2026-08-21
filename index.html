@@ -3,177 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>노래 맞추기 게임</title>
-    <!-- Firebase SDK -->
+    <title>섭리 명곡 맞추기</title>
+    <!-- Firebase SDK (버전 호환성을 위해 8버전 사용) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
+        /* (기존과 스타일 동일 - 생략 없이 그대로 사용) */
         :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #0f172a;
-            --danger: #ef4444;
+            --primary: #5c5cfb; --primary-hover: #4b4be0;
+            --secondary: #e2e8f0; --accent: #f59e0b;
+            --bg-color: #f0f4f8; --card-bg: #ffffff;
+            --text-dark: #1e293b; --text-gray: #64748b;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 480px;
-            background: var(--card-bg);
-            border-radius: 20px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-            padding: 24px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .screen {
-            display: none;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .screen.active {
-            display: flex;
-        }
-
-        h1, h2 {
-            text-align: center;
-            color: var(--text-main);
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        label {
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        select, input, button {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            font-size: 16px;
-            outline: none;
-            transition: all 0.2s;
-        }
-
-        select:focus, input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: var(--primary-hover);
-        }
-
-        button:disabled {
-            background-color: #94a3b8;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary {
-            background-color: #e2e8f0;
-            color: var(--text-main);
-        }
-
-        .btn-secondary:hover {
-            background-color: #cbd5e1;
-        }
-
-        .header-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: bold;
-            font-size: 18px;
-            background: #f1f5f9;
-            padding: 12px 16px;
-            border-radius: 12px;
-        }
-
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .hint-box {
-            background-color: #fef3c7;
-            color: #92400e;
-            padding: 12px;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: bold;
-            display: none;
-        }
-
-        .toast {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(15, 23, 42, 0.9);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 14px;
-            display: none;
-            z-index: 10;
-        }
-
-        ul {
-            list-style: none;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .volume-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 14px;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-dark); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .container { width: 100%; max-width: 420px; background: var(--card-bg); border-radius: 24px; box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08); padding: 24px; position: relative; }
+        .screen { display: none; flex-direction: column; }
+        .screen.active { display: flex; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        label { font-weight: 600; font-size: 14px; color: var(--text-gray); }
+        select { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 16px; outline: none; background: #fff; }
+        .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-main { background: var(--primary); color: white; }
+        .btn-main:hover { background: var(--primary-hover); }
+        .btn-sub { background: #f1f5f9; color: var(--text-dark); }
+        .btn-sub:hover { background: #e2e8f0; }
+        .game-header { display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 24px; }
+        .btn-exit { position: absolute; left: 0; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 24px; color: var(--text-gray); cursor: pointer; }
+        .game-header h1 { font-size: 22px; color: var(--text-dark); display: flex; align-items: center; gap: 8px;}
+        .status-box { display: flex; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px 0; margin-bottom: 20px; }
+        .status-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .status-divider { width: 1px; background: #e2e8f0; }
+        .status-label { font-size: 13px; color: var(--text-gray); }
+        .status-value { font-size: 24px; font-weight: 700; color: var(--text-dark); }
+        .controls-box { background: #f1f5f9; border-radius: 16px; padding: 16px; display: flex; justify-content: center; gap: 12px; margin-bottom: 24px; }
+        .controls-box button { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: bold; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-pause { background: #e2e8f0; color: #475569; }
+        .btn-play30 { background: var(--primary); color: white; }
+        .btn-hint { background: var(--accent); color: white; border-radius: 12px; padding: 12px 24px; border: none; font-weight: bold; font-size: 15px; cursor: pointer; margin: 0 auto 20px auto; display: block; width: auto; }
+        .hint-box { background: #fef3c7; color: #92400e; padding: 14px; border-radius: 12px; text-align: center; font-weight: bold; margin-bottom: 20px; display: none; }
+        .input-area { display: flex; gap: 8px; margin-bottom: 12px; }
+        .input-area input { flex: 1; padding: 14px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 15px; outline: none; }
+        .input-area input:focus { border-color: var(--primary); }
+        .input-area button { width: 72px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .footer-note { text-align: center; font-size: 12px; color: var(--text-gray); }
+        .toast { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); background: #2c2c38; color: white; padding: 16px 20px; border-radius: 12px; font-size: 15px; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.2); white-space: nowrap; z-index: 100; display: none; }
+        #rankList { list-style: none; max-height: 400px; overflow-y: auto; margin-bottom: 20px; }
+        #rankList li { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        .volume-control { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; margin-bottom: 12px; color: var(--text-gray); }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="toastMessage" class="toast"></div>
-
         <!-- 시작 화면 -->
         <div id="startScreen" class="screen active">
-            <h1>🎵 노래 맞추기</h1>
+            <h1 style="text-align: center; margin-bottom: 30px; font-size: 28px;">🎵 섭리 명곡 맞추기</h1>
             <div class="form-group">
                 <label for="modeSelect">게임 모드</label>
                 <select id="modeSelect">
@@ -181,81 +65,103 @@
                     <option value="special">Special 모드 (중간부터)</option>
                 </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 30px;">
                 <label for="timeSelect">제한 시간</label>
                 <select id="timeSelect">
-                    <option value="60">60초</option>
-                    <option value="120">120초</option>
-                    <option value="180">180초</option>
+                    <option value="60">1분</option>
+                    <option value="120">2분</option>
+                    <option value="180">3분</option>
                     <option value="unlimited">무제한</option>
                 </select>
             </div>
-            <button id="startBtn">게임 시작</button>
-            <button id="viewRankBtn" class="btn-secondary">🏆 랭킹 보기</button>
+            <button id="startBtn" class="btn btn-main" style="margin-bottom: 10px;">게임 시작</button>
+            <button id="viewRankBtn" class="btn btn-sub">🏆 명예의 전당</button>
         </div>
 
         <!-- 게임 화면 -->
         <div id="gameScreen" class="screen">
-            <div class="header-info">
-                <span>⏱️ <span id="timer">01:00</span></span>
-                <span>점수: <span id="score">0개</span></span>
+            <div class="game-header">
+                <button id="exitGameBtn" class="btn-exit" title="나가기">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </button>
+                <h1>🎵 섭리 명곡 맞추기</h1>
+            </div>
+            <div id="toastMessage" class="toast"></div>
+            <div class="status-box">
+                <div class="status-item"><span class="status-label">⏱️ 남은 시간</span><span class="status-value" id="timer">01:00</span></div>
+                <div class="status-divider"></div>
+                <div class="status-item"><span class="status-label">🎯 맞춘 개수</span><span class="status-value" id="score">0개</span></div>
             </div>
             <div class="volume-control">
-                <span>🔊</span>
-                <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.8">
+                <span>🔊 볼륨</span><input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.8">
             </div>
-            <div class="controls">
-                <button id="pauseBtn">⏸️ 일시정지</button>
-                <button id="play30Btn" class="btn-secondary">▶️ 30초 듣기</button>
+            <div class="controls-box">
+                <button id="pauseBtn" class="btn-pause"><span style="color:#f59e0b;">⏸️</span> 일시정지</button>
+                <button id="play30Btn" class="btn-play30">▶️ 30초 듣기</button>
             </div>
-            <button id="hintBtn" class="btn-secondary">💡 초성 힌트 보기</button>
-            <div id="hintBox" class="hint-box"></div>
-            <div class="form-group">
-                <input type="text" id="answerInput" placeholder="정답 입력 (빈칸 시 엔터 2번 = 패스)" autocomplete="off">
-                <button id="submitBtn">제출</button>
+            <button id="hintBtn" class="btn-hint">💡 초성 힌트 보기</button>
+            <div id="hintBox" class="hint-box">💡 힌트: [ ]</div>
+            <div class="input-area">
+                <input type="text" id="answerInput" placeholder="한 번 더 누르면 패스됩니다." autocomplete="off">
+                <button id="submitBtn">확인</button>
             </div>
-            <button id="exitGameBtn" class="btn-secondary" style="margin-top: 10px;">🚪 게임 나가기</button>
+            <div class="footer-note">* 띄어쓰기는 틀려도 글자만 맞으면 정답 처리됩니다.</div>
         </div>
 
         <!-- 결과 화면 -->
         <div id="resultScreen" class="screen">
-            <h2>🎉 게임 종료!</h2>
-            <p style="text-align: center; font-size: 20px; margin: 20px 0;">최종 점수: <strong id="finalScore" style="color: var(--primary);">0개</strong></p>
-            <button id="saveRankBtn">🏆 랭킹 등록하기</button>
-            <button id="restartBtn" class="btn-secondary">다시 하기</button>
+            <h2 style="text-align: center; margin-bottom: 20px;">🎉 게임 종료!</h2>
+            <div class="status-box" style="margin-bottom: 30px;">
+                <div class="status-item">
+                    <span class="status-label">최종 점수</span>
+                    <span class="status-value" id="finalScore" style="color: var(--primary);">0개</span>
+                </div>
+            </div>
+            <!-- 결과 화면용 토스트 (랭킹 등록 완료 알림용) -->
+            <div id="resultToastMessage" class="toast" style="top: 50%;"></div>
+            
+            <button id="saveRankBtn" class="btn btn-main" style="margin-bottom: 10px;">🏆 순위 등록하기</button>
+            <button id="restartBtn" class="btn btn-sub">다시 하기</button>
         </div>
 
         <!-- 랭킹 화면 -->
         <div id="rankScreen" class="screen">
-            <h2>🏆 명예의 전당</h2>
+            <h2 style="text-align: center; margin-bottom: 20px;">🏆 명예의 전당</h2>
             <ul id="rankList"></ul>
-            <button id="backToStartBtn" class="btn-secondary">메인으로 돌아가기</button>
+            <button id="backToStartBtn" class="btn btn-sub">메인으로 돌아가기</button>
         </div>
     </div>
 
-    <!-- 오디오 엘리먼트 -->
     <audio id="audioPlayer"></audio>
     <audio id="sfxCorrect" src="sfx/correct.mp3"></audio>
     <audio id="sfxWrong" src="sfx/wrong.mp3"></audio>
 
     <script>
-        // 파이어베이스 안전 초기화
+        // ----------------------------------------------------
+        // [중요] 모든 기기에서 순위표를 공유하려면 꼭 서버 주소를 넣어야 합니다!
+        // ----------------------------------------------------
         let database = null;
+        let useLocalStorage = false; 
+
         try {
             const firebaseConfig = {
-                databaseURL: "https://your-firebase-database-url.firebaseio.com"
+                // 아래 주소를 본인의 파이어베이스 데이터베이스 URL로 변경하세요!
+                databaseURL: "https://song0316-b7ad7-default-rtdb.firebaseio.com/" 
             };
-            if (typeof firebase !== 'undefined' && firebase.apps) {
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                }
+            
+            if (firebaseConfig.databaseURL.includes('your-firebase-database-url')) {
+                useLocalStorage = true;
+            } else if (typeof firebase !== 'undefined' && firebase.apps) {
+                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 database = firebase.database();
             }
         } catch (e) {
-            console.warn("Firebase 연동 오류 (로컬 모드로 동작합니다):", e);
+            useLocalStorage = true;
         }
 
-        // 전체 재생목록 데이터 (Part 1 ~ Part 5)
+       // 전체 재생목록 데이터 (Part 1 ~ Part 5)
         const playlist = [
             // Part 1
             { title: 'My Way remix', src: 'part1/My Way remix.mp3' },
@@ -293,7 +199,7 @@
             { title: '기도합니다', src: 'part1/기도합니다.mp3' },
             { title: '기적의 날씨', src: 'part1/기적의 날씨.mp3' },
             { title: '기적의 역사다', src: 'part1/기적의 역사다.mp3' },
-            { title: '기회는 한 번이다 믿고 따르라 (feat. Joshua Jeong Piano )', src: 'part1/기회는 한 번이다 믿고 따르라 (feat. Joshua Jeong Piano ).mp3' },
+            { title: '기회는 한 번이다 믿고 따르라', src: 'part1/기회는 한 번이다 믿고 따르라 .mp3' },
             { title: '길 잃은 사람, 길 찾은 사람', src: 'part1/길 잃은 사람, 길 찾은 사람.mp3' },
             { title: '깊어 가는 여름밤', src: 'part1/깊어 가는 여름밤.mp3' },
             { title: '깨끗한 계곡에서', src: 'part1/깨끗한 계곡에서.mp3' },
@@ -738,34 +644,26 @@
             { title: '힘으로 존재한다', src: 'part5/힘으로 존재한다.mp3' }
         ];
 
-        // 변수 설정
-        let shuffledList = [];
-        let currentIndex = 0;
-        let score = 0;
-        let timer = null;
-        let totalTime = 60;
-        let timeLeft = 60;
-        let emptyEnterCount = 0;
-        let wrongAttempts = 0;
-        let isUnlimited = false;
-        let currentMode = 'normal';
-        let maxPlaySeconds = 5; 
-        let startPlayTime = 0; 
+        let shuffledList = [], currentIndex = 0, score = 0, timer = null;
+        let totalTime = 60, timeLeft = 60, emptyEnterCount = 0, wrongAttempts = 0;
+        let isUnlimited = false, currentMode = 'normal', maxPlaySeconds = 5, startPlayTime = 0; 
 
-        // DOM Elements
         const screens = document.querySelectorAll('.screen');
         const modeSelect = document.getElementById('modeSelect');
         const timeSelect = document.getElementById('timeSelect');
         const timerEl = document.getElementById('timer');
         const scoreEl = document.getElementById('score');
         const audioPlayer = document.getElementById('audioPlayer');
-        const sfxCorrect = document.getElementById('sfxCorrect');
-        const sfxWrong = document.getElementById('sfxWrong');
         const answerInput = document.getElementById('answerInput');
         const hintBox = document.getElementById('hintBox');
         const toastMessage = document.getElementById('toastMessage');
+        const resultToastMessage = document.getElementById('resultToastMessage');
 
-        // 셔플 함수
+        function playSfx(id) {
+            const sfx = document.getElementById(id);
+            if(sfx) { sfx.currentTime = 0; sfx.play().catch(e=>{}); }
+        }
+
         function shuffle(arr) {
             const array = [...arr];
             for (let i = array.length - 1; i > 0; i--) {
@@ -775,166 +673,119 @@
             return array;
         }
 
-        // 화면 전환
         function showScreen(screenId) {
             screens.forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
         }
 
-        // 토스트 메시지
         function showToast(msg, duration = 2000, callback = null) {
-            toastMessage.textContent = msg;
+            toastMessage.innerHTML = msg;
             toastMessage.style.display = 'block';
-            
-            answerInput.disabled = true;
-            document.getElementById('submitBtn').disabled = true;
-
+            answerInput.disabled = true; document.getElementById('submitBtn').disabled = true;
             setTimeout(() => {
                 toastMessage.style.display = 'none';
-                answerInput.disabled = false;
-                document.getElementById('submitBtn').disabled = false;
+                answerInput.disabled = false; document.getElementById('submitBtn').disabled = false;
                 answerInput.focus();
                 if (callback) callback();
             }, duration);
         }
 
-        // 초성 추출 함수
         function getChosung(str) {
             const cho = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
             let result = "";
             for (let i = 0; i < str.length; i++) {
                 const code = str.charCodeAt(i) - 44032;
-                if (code > -1 && code < 11172) result += cho[Math.floor(code / 588)];
-                else result += str.charAt(i); 
+                if (code > -1 && code < 11172) result += cho[Math.floor(code / 588)] + " ";
+                else if (str.charAt(i) !== " ") result += str.charAt(i) + " "; 
             }
-            return result;
+            return result.trim();
         }
 
-        // 점수 업데이트
-        function updateScoreDisplay() {
-            if (isUnlimited) {
-                scoreEl.textContent = `${score} / ${shuffledList.length}개`;
-            } else {
-                scoreEl.textContent = `${score}개`;
-            }
-        }
+        function updateScoreDisplay() { scoreEl.textContent = `${score}개`; }
 
-        // 게임 시작 버튼 이벤트
         document.getElementById('startBtn').addEventListener('click', () => {
             currentMode = modeSelect.value;
             const selectedTime = timeSelect.value;
-            
             isUnlimited = (selectedTime === 'unlimited');
             totalTime = isUnlimited ? 0 : parseInt(selectedTime);
             timeLeft = totalTime;
             
-            timerEl.style.color = "var(--text-main)";
-            
-            score = 0;
-            currentIndex = 0;
+            timerEl.style.color = "var(--text-dark)";
+            score = 0; currentIndex = 0;
             shuffledList = shuffle([...playlist]);
             updateScoreDisplay();
             
-            if (isUnlimited) {
-                timerEl.textContent = "무제한";
-            } else {
-                updateTimerDisplay();
-                clearInterval(timer);
+            if (isUnlimited) { timerEl.textContent = "무제한"; } 
+            else {
+                updateTimerDisplay(); clearInterval(timer);
                 timer = setInterval(() => {
-                    timeLeft--;
-                    updateTimerDisplay();
+                    timeLeft--; updateTimerDisplay();
                     if (timeLeft <= 0) endGame();
                 }, 1000);
             }
             
-            showScreen('gameScreen');
-            nextQuestion();
+            document.getElementById('saveRankBtn').style.display = 'block'; // 버튼 초기화
+            showScreen('gameScreen'); nextQuestion();
         });
 
-        // 타이머 업데이트
+        document.getElementById('exitGameBtn').addEventListener('click', () => {
+            if (confirm("정말 게임을 종료하고 메인 화면으로 나가시겠습니까?")) {
+                clearInterval(timer); audioPlayer.pause(); showScreen('startScreen');
+            }
+        });
+
         function updateTimerDisplay() {
             if (isUnlimited) return;
+            if (totalTime > 0 && timeLeft <= (totalTime * 0.1)) timerEl.style.color = "#ef4444"; 
+            else timerEl.style.color = "var(--text-dark)";
             
-            if (totalTime > 0 && timeLeft <= (totalTime * 0.1)) {
-                timerEl.style.color = "var(--danger)";
-            } else {
-                timerEl.style.color = "var(--text-main)";
-            }
-
             const min = String(Math.floor(timeLeft / 60)).padStart(2, '0');
             const sec = String(timeLeft % 60).padStart(2, '0');
             timerEl.textContent = `${min}:${sec}`;
         }
 
-        // 문제 로드
         function nextQuestion() {
-            if (currentIndex >= shuffledList.length) {
-                endGame();
-                return;
-            }
-            hintBox.style.display = 'none';
-            answerInput.value = '';
-            answerInput.placeholder = '정답 입력 (빈칸 시 엔터 2번 = 패스)';
-            emptyEnterCount = 0;
-            wrongAttempts = 0; 
+            if (currentIndex >= shuffledList.length) { endGame(); return; }
+            hintBox.style.display = 'none'; answerInput.value = '';
+            answerInput.placeholder = '한 번 더 누르면 패스됩니다.';
+            emptyEnterCount = 0; wrongAttempts = 0; 
             
             const currentSong = shuffledList[currentIndex];
             audioPlayer.src = currentSong.src;
             audioPlayer.volume = document.getElementById('volumeSlider').value;
-            
             audioPlayer.load();
-            audioPlayer.onloadedmetadata = () => {
-                playAudioLimit(5); 
-            };
+            audioPlayer.onloadedmetadata = () => { playAudioLimit(5); };
         }
 
-        // 오디오 재생 제한
         function playAudioLimit(seconds) {
             maxPlaySeconds = seconds;
-            
-            if (currentMode === 'special' && audioPlayer.duration) {
-                startPlayTime = audioPlayer.duration / 2;
-            } else {
-                startPlayTime = 0;
-            }
-            
+            startPlayTime = (currentMode === 'special' && audioPlayer.duration) ? audioPlayer.duration / 2 : 0;
             audioPlayer.currentTime = startPlayTime;
             audioPlayer.play().catch(e => console.log('자동 재생 제한'));
-            document.getElementById('pauseBtn').textContent = '⏸️ 일시정지';
+            document.getElementById('pauseBtn').innerHTML = '<span style="color:#f59e0b;">⏸️</span> 일시정지';
         }
 
         audioPlayer.addEventListener('timeupdate', () => {
             if (audioPlayer.currentTime >= startPlayTime + maxPlaySeconds && !audioPlayer.paused) {
                 audioPlayer.pause();
-                document.getElementById('pauseBtn').textContent = '▶️ 재생 (5초)';
+                document.getElementById('pauseBtn').innerHTML = '<span style="color:#f59e0b;">▶️</span> 재생 (5초)';
             }
         });
 
         document.getElementById('pauseBtn').addEventListener('click', () => {
-            if (audioPlayer.paused) {
-                playAudioLimit(5);
-            } else {
-                audioPlayer.pause();
-                document.getElementById('pauseBtn').textContent = '▶️ 재생 (5초)';
-            }
+            if (audioPlayer.paused) playAudioLimit(5);
+            else { audioPlayer.pause(); document.getElementById('pauseBtn').innerHTML = '<span style="color:#f59e0b;">▶️</span> 재생 (5초)'; }
         });
 
-        document.getElementById('play30Btn').addEventListener('click', () => {
-            playAudioLimit(30);
-        });
-
-        document.getElementById('volumeSlider').addEventListener('input', (e) => {
-            audioPlayer.volume = e.target.value;
-        });
+        document.getElementById('play30Btn').addEventListener('click', () => { playAudioLimit(30); });
+        document.getElementById('volumeSlider').addEventListener('input', (e) => { audioPlayer.volume = e.target.value; });
 
         document.getElementById('hintBtn').addEventListener('click', () => {
             const title = shuffledList[currentIndex].title;
-            const chosung = getChosung(title);
-            hintBox.textContent = `💡 힌트: [ ${chosung} ]`;
+            hintBox.textContent = `💡 힌트: [ ${getChosung(title)} ]`;
             hintBox.style.display = 'block';
         });
 
-        // 정답 확인
         function checkAnswer() {
             const input = answerInput.value.trim();
             const currentTitle = shuffledList[currentIndex].title;
@@ -943,13 +794,8 @@
                 emptyEnterCount++;
                 if (emptyEnterCount >= 2) {
                     audioPlayer.pause();
-                    showToast(`⏭️ 패스! 정답은 [ ${currentTitle} ] 입니다.`, 2000, () => {
-                        currentIndex++;
-                        nextQuestion();
-                    });
-                } else {
-                    answerInput.placeholder = '한 번 더 누르면 패스됩니다.';
-                }
+                    showToast(`⏭️ 패스! 정답은<br>[ <b>${currentTitle}</b> ] 입니다.`, 2000, () => { currentIndex++; nextQuestion(); });
+                } else { answerInput.placeholder = '한 번 더 누르면 패스됩니다.'; }
                 return;
             }
             
@@ -958,130 +804,123 @@
             const cleanTarget = currentTitle.replace(/[\s\?\!\.\,\~\(\)\-_]/g, "").toLowerCase();
             
             if (cleanUser === cleanTarget) {
-                audioPlayer.pause();
-                sfxCorrect.currentTime = 0;
-                sfxCorrect.play().catch(e=>{});
-                
-                score++;
-                updateScoreDisplay();
-                showToast("🎉 정답입니다!", 1200, () => {
-                    currentIndex++;
-                    nextQuestion();
-                });
+                audioPlayer.pause(); playSfx('sfxCorrect'); score++; updateScoreDisplay();
+                showToast("🎉 정답입니다!", 1200, () => { currentIndex++; nextQuestion(); });
             } else {
-                wrongAttempts++;
-                sfxWrong.currentTime = 0;
-                sfxWrong.play().catch(e=>{});
-                
-                answerInput.value = '';
-                
+                wrongAttempts++; playSfx('sfxWrong'); answerInput.value = '';
                 if (wrongAttempts >= 3) {
                     audioPlayer.pause();
-                    showToast(`❌ 3회 오답! 정답은 [ ${currentTitle} ] 입니다.`, 2000, () => {
-                        currentIndex++;
-                        nextQuestion();
-                    });
-                } else {
-                    answerInput.placeholder = `❌ 오답! (${3 - wrongAttempts}번의 기회 남음)`;
-                }
+                    showToast(`❌ 3회 오답! 정답은<br>[ <b>${currentTitle}</b> ] 입니다.`, 2000, () => { currentIndex++; nextQuestion(); });
+                } else { answerInput.placeholder = `❌ 오답! (${3 - wrongAttempts}번의 기회 남음)`; }
             }
         }
 
         document.getElementById('submitBtn').addEventListener('click', checkAnswer);
-        answerInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') checkAnswer();
-        });
-
-        document.getElementById('exitGameBtn').addEventListener('click', () => {
-            if (confirm("정말 게임을 종료하고 나가시겠습니까?")) {
-                clearInterval(timer);
-                audioPlayer.pause();
-                showScreen('startScreen');
-            }
-        });
+        answerInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkAnswer(); });
 
         function endGame() {
-            clearInterval(timer);
-            audioPlayer.pause();
+            clearInterval(timer); audioPlayer.pause();
             document.getElementById('finalScore').textContent = isUnlimited ? `${score} / ${shuffledList.length}개` : `${score}개`;
             showScreen('resultScreen');
         }
 
-        // 랭킹 불러오기
         function loadRanking() {
             const rankList = document.getElementById('rankList');
-            if (!rankList) return;
-
-            if (!database) {
-                rankList.innerHTML = '<li style="text-align:center; color:#ef4444; padding:20px;">⚠️ 파이어베이스 설정이 완료되지 않았습니다.<br><small style="color:#64748b;">(코드 내 firebaseConfig의 URL을 확인하세요)</small></li>';
+            rankList.innerHTML = '<li style="text-align:center; color:#94a3b8; padding:20px;">데이터를 불러오는 중... ⏳</li>';
+            
+            if (useLocalStorage || !database) {
+                setTimeout(() => {
+                    let ranks = JSON.parse(localStorage.getItem('myRanks')) || [];
+                    ranks.sort((a, b) => b.score - a.score);
+                    renderRankList(rankList, ranks);
+                }, 300); 
                 return;
             }
 
-            rankList.innerHTML = '<li style="text-align:center; color:#94a3b8; padding:20px;">데이터를 불러오는 중... ⏳</li>';
-            
-            database.ref('rankings').once('value', (snapshot) => {
-                const ranks = [];
-                snapshot.forEach((childSnapshot) => {
-                    ranks.push(childSnapshot.val());
-                });
-                
-                ranks.sort((a, b) => b.score - a.score);
-                rankList.innerHTML = '';
-                
-                if (ranks.length === 0) {
-                    rankList.innerHTML = '<li style="text-align:center; color:#94a3b8; padding:20px;">아직 등록된 기록이 없습니다.</li>';
-                    return;
+            let isLoaded = false;
+            let loadingTimeout = setTimeout(() => {
+                if (!isLoaded) {
+                    useLocalStorage = true; loadRanking(); 
                 }
-                
-                ranks.slice(0, 50).forEach((r, idx) => {
-                    const li = document.createElement('li');
-                    li.style.cssText = "display:flex; justify-content:space-between; padding:8px 12px; border-bottom: 1px solid #e2e8f0;";
-                    li.innerHTML = `
-                        <span><strong>${idx + 1}위.</strong> ${r.name}</span>
-                        <span style="color:var(--primary); font-weight:bold;">${r.score}개 <small style="color:#94a3b8; font-weight:normal;">(${r.mode})</small></span>
-                    `;
-                    rankList.appendChild(li);
-                });
-            }, (error) => {
+            }, 3000);
+
+            database.ref('rankings').once('value').then((snapshot) => {
+                isLoaded = true; clearTimeout(loadingTimeout);
+                const ranks = [];
+                snapshot.forEach((childSnapshot) => { ranks.push(childSnapshot.val()); });
+                ranks.sort((a, b) => b.score - a.score);
+                renderRankList(rankList, ranks);
+            }).catch((error) => {
+                isLoaded = true; clearTimeout(loadingTimeout);
                 rankList.innerHTML = `<li style="text-align:center; color:#ef4444; padding:20px;">불러오기 실패: ${error.message}</li>`;
             });
         }
 
-        // 랭킹 저장
-        document.getElementById('saveRankBtn').addEventListener('click', () => {
-            if (!database) {
-                alert("파이어베이스 설정이 연결되지 않아 랭킹을 저장할 수 없습니다.");
-                return;
+        function renderRankList(element, ranks) {
+            element.innerHTML = '';
+            if (ranks.length === 0) {
+                element.innerHTML = '<li style="text-align:center; color:#94a3b8; padding:20px;">아직 등록된 기록이 없습니다.</li>'; return;
             }
+            ranks.slice(0, 50).forEach((r, idx) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span style="font-size: 15px; font-weight: 600; color: var(--text-dark);">
+                        <span style="color:var(--text-gray); width: 24px; display: inline-block;">${idx + 1}.</span> ${r.name}
+                    </span>
+                    <span style="color:var(--primary); font-weight:bold; font-size: 15px;">
+                        ${r.score}개 <span style="color:var(--text-gray); font-size: 12px; font-weight:normal;">(${r.mode})</span>
+                    </span>
+                `;
+                element.appendChild(li);
+            });
+        }
 
+        // 성공 메시지를 띄우고 순위표로 자동 이동하는 함수
+        function showSuccessAndMove() {
+            document.getElementById('saveRankBtn').style.display = 'none';
+            resultToastMessage.innerHTML = "🎉 명예의 전당에 등록되었습니다!";
+            resultToastMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                resultToastMessage.style.display = 'none';
+                loadRanking();
+                showScreen('rankScreen');
+            }, 1500);
+        }
+
+        document.getElementById('saveRankBtn').addEventListener('click', () => {
             const name = prompt("순위표에 등록할 닉네임을 입력하세요 (최대 8글자):");
             if (name && name.trim() !== '') {
-                let modeText = isUnlimited ? '무제한' : `${totalTime}초`;
+                let modeText = isUnlimited ? '무제한' : `${totalTime/60}분`;
                 if (currentMode === 'special') modeText += ' (Special)';
                 
-                database.ref('rankings').push({
+                const newRecord = {
                     name: name.trim().substring(0, 8),
                     score: score,
                     mode: modeText,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                }, (error) => {
-                    if (error) {
+                    timestamp: Date.now()
+                };
+
+                if (useLocalStorage || !database) {
+                    let ranks = JSON.parse(localStorage.getItem('myRanks')) || [];
+                    ranks.push(newRecord);
+                    localStorage.setItem('myRanks', JSON.stringify(ranks));
+                    showSuccessAndMove();
+                } else {
+                    database.ref('rankings').push({
+                        ...newRecord,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    }).then(() => {
+                        showSuccessAndMove();
+                    }).catch((error) => {
                         alert("저장 실패: " + error.message);
-                    } else {
-                        alert("🎉 랭킹에 등록되었습니다!");
-                        document.getElementById('saveRankBtn').style.display = 'none';
-                        loadRanking();
-                    }
-                });
+                    });
+                }
             }
         });
 
-        // 기타 버튼 연결
         document.getElementById('restartBtn').addEventListener('click', () => showScreen('startScreen'));
-        document.getElementById('viewRankBtn').addEventListener('click', () => {
-            loadRanking();
-            showScreen('rankScreen');
-        });
+        document.getElementById('viewRankBtn').addEventListener('click', () => { loadRanking(); showScreen('rankScreen'); });
         document.getElementById('backToStartBtn').addEventListener('click', () => showScreen('startScreen'));
     </script>
 </body>
