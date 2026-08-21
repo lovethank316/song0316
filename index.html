@@ -27,7 +27,6 @@
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             padding: 24px;
-            box-sizing: border-box;
         }
         .screen { display: none; }
         .screen.active { display: block; }
@@ -44,13 +43,9 @@
             transition: all 0.2s;
         }
         .btn-main { background: #4f46e5; color: white; }
-        .btn-main:hover { background: #4338ca; }
         .btn-sub { background: #f3f4f6; color: #374151; }
-        .btn-sub:hover { background: #e5e7eb; }
         .btn-secondary { background: #6b7280; color: white; }
-        .btn-secondary:hover { background: #4b5563; }
         .btn-danger { background: #ef4444; color: white; }
-        .btn-danger:hover { background: #dc2626; }
         
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: bold; }
@@ -60,15 +55,6 @@
             border: 1px solid #d1d5db;
             border-radius: 6px;
             box-sizing: border-box;
-        }
-
-        /* 토스트 및 알림 메시지 */
-        .toast {
-            text-align: center;
-            font-weight: bold;
-            color: #4f46e5;
-            min-height: 24px;
-            margin: 8px 0;
         }
 
         /* 📚 공부하기 방 플레이리스트 스타일 */
@@ -98,23 +84,22 @@
             color: #3730a3;
         }
 
-        /* 🏆 랭킹 리스트 스타일 */
-        .rank-list {
-            list-style: none;
-            padding: 0;
-            max-height: 250px;
-            overflow-y: auto;
-            margin: 15px 0;
-        }
-        .rank-list li {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            font-size: 15px;
+        /* 알림(Toast) 메시지 스타일 추가 */
+        .toast {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 1000;
+            text-align: center;
         }
     </style>
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (반드시 필요합니다) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
@@ -157,14 +142,14 @@
             
             <div id="toastMessage" class="toast"></div>
 
-            <div class="status-box" style="display: flex; justify-content: space-around; margin: 15px 0; background: #f3f4f6; padding: 10px; border-radius: 8px;">
-                <div>남은 시간: <span id="timer" style="font-weight: bold; color: #ef4444;">0</span></div>
-                <div>맞춘 개수: <span id="score" style="font-weight: bold; color: #4f46e5;">0</span></div>
+            <div class="status-box" style="display: flex; justify-content: space-around; margin: 15px 0;">
+                <div>남은 시간: <span id="timer">0</span></div>
+                <div>맞춘 개수: <span id="score">0</span></div>
             </div>
 
-            <div class="volume-control" style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+            <div class="volume-control" style="margin-bottom: 15px;">
                 <span>🔊 볼륨</span>
-                <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.8" style="flex: 1;">
+                <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.8">
             </div>
 
             <button id="stopUnlimitedBtn" class="btn btn-danger" style="display:none;">🛑 게임 중단하고 순위 등록</button>
@@ -176,19 +161,19 @@
             </div>
 
             <button id="hintBtn" class="btn btn-sub">💡 초성 힌트 보기</button>
-            <div id="hintBox" style="margin: 10px 0; font-weight: bold; text-align: center; color: #4f46e5;"></div>
+            <div id="hintBox" style="margin: 10px 0; font-weight: bold; color: #4f46e5; text-align: center;"></div>
 
             <div class="input-area" style="margin-top: 15px;">
-                <input type="text" id="answerInput" placeholder="정답 입력 (엔터 또는 확인)" autocomplete="off">
+                <input type="text" id="answerInput" placeholder="입력 없이 확인을 누르면 패스됩니다." autocomplete="off">
                 <button id="submitBtn" class="btn btn-main" style="margin-top: 8px;">확인</button>
             </div>
-            <div style="font-size: 12px; color: #888; margin-top: 5px; text-align: center;">* 띄어쓰기는 틀려도 글자만 맞으면 정답 처리됩니다. 빈 칸으로 제출 시 패스됩니다.</div>
+            <div style="font-size: 12px; color: #888; margin-top: 5px;">* 띄어쓰기는 틀려도 글자만 맞으면 정답 처리됩니다.</div>
         </div>
 
         <!-- 3. 결과 화면 -->
         <div id="resultsScreen" class="screen">
             <h2 style="text-align: center;">🎉 게임 종료!</h2>
-            <div id="finalScore" style="text-align: center; font-size: 20px; margin: 20px 0;"></div>
+            <div id="finalScore" style="text-align: center; font-size: 24px; font-weight: bold; color: #4f46e5; margin: 20px 0;"></div>
             <button id="restartBtn" class="btn btn-main">다시 하기</button>
             <button id="backToStartBtn" class="btn btn-sub">메인 메뉴로</button>
         </div>
@@ -207,13 +192,6 @@
 
             <button id="btn-study-back" class="btn btn-secondary">메인 메뉴로 돌아가기</button>
         </div>
-
-        <!-- 5. 🏆 명예의 전당 화면 -->
-        <div id="rankScreen" class="screen">
-            <h2 style="text-align: center;">🏆 명예의 전당</h2>
-            <ul id="rankList" class="rank-list"></ul>
-            <button id="rankBackBtn" class="btn btn-secondary">메인 메뉴로 돌아가기</button>
-        </div>
     </div>
 
     <!-- 스크립트 영역 -->
@@ -221,379 +199,379 @@
         /* ==========================================
            1. 노래 목록
         ========================================== */
-        const playlist = [
-            // --- Part 1 ---
-            { title: "My Way remix", src: "part1/My Way remix.mp3" },
-            { title: "My way", src: "part1/My way.mp3" },
-            { title: "가는 길", src: "part1/가는 길.mp3" },
-            { title: "가랑비", src: "part1/가랑비.mp3" },
-            { title: "가르쳐 주었네", src: "part1/가르쳐 주었네.mp3" },
-            { title: "가자 때가 됐다 remix", src: "part1/가자 때가 됐다 remix.mp3" },
-            { title: "가자 때가 됐다", src: "part1/가자 때가 됐다.mp3" },
-            { title: "가자 별봉정으로", src: "part1/가자 별봉정으로.mp3" },
-            { title: "가자 오자 대둔산으로", src: "part1/가자 오자 대둔산으로.mp3" },
-            { title: "감동되었네 감화되었네", src: "part1/감동되었네 감화되었네.mp3" },
-            { title: "걱정 말고 따라오너라", src: "part1/걱정 말고 따라오너라.mp3" },
-            { title: "걸작은 연출", src: "part1/걸작은 연출.mp3" },
-            { title: "고향 산 너머", src: "part1/고향 산 너머.mp3" },
-            { title: "골든 타임 놓치지 말아라", src: "part1/골든 타임 놓치지 말아라.mp3" },
-            { title: "골인이다", src: "part1/골인이다.mp3" },
-            { title: "광명한 새벽별아", src: "part1/광명한 새벽별아.mp3" },
-            { title: "구상대로 행한다면", src: "part1/구상대로 행한다면.mp3" },
-            { title: "구상을 주셨네", src: "part1/구상을 주셨네.mp3" },
-            { title: "굳건히 가야 한다", src: "part1/굳건히 가야 한다.mp3" },
-            { title: "굳건히 서서", src: "part1/굳건히 서서.mp3" },
-            { title: "귀하게 써야 한다", src: "part1/귀하게 써야 한다.mp3" },
-            { title: "그대 통하여 하나님 삶을", src: "part1/그대 통하여 하나님 삶을.mp3" },
-            { title: "그때가 되면", src: "part1/그때가 되면.mp3" },
-            { title: "극히 담대하라", src: "part1/극히 담대하라.mp3" },
-            { title: "기다려요", src: "part1/기다려요.mp3" },
-            { title: "기다렸지 긴긴 날을", src: "part1/기다렸지 긴긴 날을.mp3" },
-            { title: "기도다 기도", src: "part1/기도다 기도.mp3" },
-            { title: "기도동산아", src: "part1/기도동산아.mp3" },
-            { title: "기도동산이어라", src: "part1/기도동산이어라.mp3" },
-            { title: "기도를 못 했잖아요", src: "part1/기도를 못 했잖아요.mp3" },
-            { title: "기도의 님아", src: "part1/기도의 님아.mp3" },
-            { title: "기도하고 또 기도하라", src: "part1/기도하고 또 기도하라.mp3" },
-            { title: "기도합니다", src: "part1/기도합니다.mp3" },
-            { title: "기적의 날씨", src: "part1/기적의 날씨.mp3" },
-            { title: "기적의 역사다", src: "part1/기적의 역사다.mp3" },
-            { title: "길 잃은 사람, 길 찾은 사람", src: "part1/길 잃은 사람, 길 찾은 사람.mp3" },
-            { title: "깊어 가는 여름밤", src: "part1/깊어 가는 여름밤.mp3" },
-            { title: "깨끗한 계곡에서", src: "part1/깨끗한 계곡에서.mp3" },
-            { title: "깨닫도록 하였다", src: "part1/깨닫도록 하였다.mp3" },
-            { title: "깨달아라", src: "part1/깨달아라.mp3" },
-            
-            // --- Part 2 ---
-            { title: '님은 태양 같아', src: 'part2/님은 태양 같아.mp3' },
-            { title: '님이 나타나거들랑', src: 'part2/님이 나타나거들랑.mp3' },
-            { title: '님이여', src: 'part2/님이여.mp3' },
-            { title: '달이 간다 나도 간다', src: 'part2/달이 간다 나도 간다.mp3' },
-            { title: '대둔산 용문골 어느 날 밤에', src: 'part2/대둔산 용문골 어느 날 밤에.mp3' },
-            { title: '더 잘하기 삶이다', src: 'part2/더 잘하기 삶이다.mp3' },
-            { title: '더 잘하라', src: 'part2/더 잘하라.mp3' },
-            { title: '동에 번쩍 서에 번쩍', src: 'part2/동에 번쩍 서에 번쩍.mp3' },
-            { title: '동해 바다다', src: 'part2/동해 바다다.mp3' },
-            { title: '따라가세', src: 'part2/따라가세.mp3' },
-            { title: '따라와요 묻지말고', src: 'part2/따라와요 묻지말고.mp3' },
-            { title: '땅의 황금천국 월명동', src: 'part2/땅의 황금천국 월명동.mp3' },
-            { title: '때가 왔다', src: 'part2/때가 왔다.mp3' },
-            { title: '때의 하나님이시다', src: 'part2/때의 하나님이시다.mp3' },
-            { title: '떨어질 수 없는 운명', src: 'part2/떨어질 수 없는 운명.mp3' },
-            { title: '또 만났네', src: 'part2/또 만났네.mp3' },
-            { title: '뛰고 놀았네', src: 'part2/뛰고 놀았네.MP3' },
-            { title: '뛰자 달리자 쏟아지기 전에', src: 'part2/뛰자 달리자 쏟아지기 전에.mp3' },
-            { title: '뜻을 따라 살아갑니다', src: 'part2/뜻을 따라 살아갑니다.mp3' },
-            { title: '마음을 담대히', src: 'part2/마음을 담대히.mp3' },
-            { title: '마지막 천 년 역사 혼인 잔치', src: 'part2/마지막 천 년 역사 혼인 잔치.mp3' },
-            { title: '마지막 한마디 남기고 간다', src: 'part2/마지막 한마디 남기고 간다.mp3' },
-            { title: '막는다고 못 할쏘냐', src: 'part2/막는다고 못 할쏘냐.mp3' },
-            { title: '만들어라', src: 'part2/만들어라.mp3' },
-            { title: '만물도 하나님 찬양', src: 'part2/만물도 하나님 찬양.mp3' },
-            { title: '만왕의 왕 만주의 주', src: 'part2/만왕의 왕 만주의 주.mp3' },
-            { title: '많고 많은 사람 중에', src: 'part2/많고 많은 사람 중에.mp3' },
-            { title: '말처럼 뛰자', src: 'part2/말처럼 뛰자.mp3' },
-            { title: '멋있게 뛰는 거야', src: 'part2/멋있게 뛰는 거야.mp3' },
-            { title: '멋있게 뛰는거야 Ver.2', src: 'part2/멋있게 뛰는거야 Ver.2.mp3' },
-            { title: '명솔1', src: 'part2/명솔1.mp3' },
-            { title: '명솔2', src: 'part2/명솔2.mp3' },
-            { title: '모여온다', src: 'part2/모여온다.mp3' },
-            { title: '목적 있는 곳에 뜻이 있다', src: 'part2/목적 있는 곳에 뜻이 있다.mp3' },
-            { title: '목적을 이루며 가야 한다', src: 'part2/목적을 이루며 가야 한다.mp3' },
-            { title: '목적을 향하여', src: 'part2/목적을 향하여.mp3' },
-            { title: '무슨 일이야', src: 'part2/무슨 일이야.mp3' },
-            { title: '무엇이 불가능 하느냐', src: 'part2/무엇이 불가능 하느냐.mp3' },
-            { title: '무조건 하기다', src: 'part2/무조건 하기다.mp3' },
-            { title: '미련도 없이 따라가렵니다', src: 'part2/미련도 없이 따라가렵니다.mp3' },
-            { title: '미련없는 사랑', src: 'part2/미련없는 사랑.mp3' },
-            { title: '미련없이 살았네', src: 'part2/미련없이 살았네.mp3' },
-            { title: '믿으라 내 말을', src: 'part2/믿으라 내 말을.mp3' },
-            { title: '바다가 길이라면', src: 'part2/바다가 길이라면.mp3' },
-            { title: '반짝반짝', src: 'part2/반짝반짝.mp3' },
-            { title: '받아주옵소서', src: 'part2/받아주옵소서.mp3' },
-            { title: '밝은 빛을 따라서', src: 'part2/밝은 빛을 따라서.mp3' },
-            { title: '배치다 위치다', src: 'part2/배치다 위치다.mp3' },
-            { title: '백보좌 야심작', src: 'part2/백보좌 야심작.mp3' },
-            { title: '범사에 기도하라', src: 'part2/범사에 기도하라.mp3' },
-            { title: '변치 말아라 잊지 말아라', src: 'part2/변치 말아라 잊지 말아라.mp3' },
-            { title: '변치 아니하시네', src: 'part2/변치 아니하시네.mp3' },
-            { title: '변치 않고 가렵니다', src: 'part2/변치 않고 가렵니다.mp3' },
-            { title: '변해야 한다', src: 'part2/변해야 한다.mp3' },
-            { title: '별 하나 나 하나', src: 'part2/별 하나 나 하나.mp3' },
-            { title: '별들이 부른다', src: 'part2/별들이 부른다.mp3' },
-            { title: '보호해 주신 성령님', src: 'part2/보호해 주신 성령님.mp3' },
-            { title: '봄, 여름', src: 'part2/봄, 여름.mp3' },
-            { title: '봄날 되면', src: 'part2/봄날 되면.mp3' },
-            { title: '봄날의 밤', src: 'part2/봄날의 밤.MP3' },
-            { title: '봄바람 타고', src: 'part2/봄바람 타고.mp3' },
-            { title: '봄이 왔습니다', src: 'part2/봄이 왔습니다.mp3' },
-            { title: '부두의 고독2', src: 'part2/부두의 고독2.mp3' },
-            { title: '부지런히 배워라', src: 'part2/부지런히 배워라.mp3' },
-            { title: '빨리하라', src: 'part2/빨리하라.mp3' },
-            { title: '사람은 생각으로 살아간다', src: 'part2/사람은 생각으로 살아간다.mp3' },
-            { title: '사랑, 영원까지', src: 'part2/사랑, 영원까지.mp3' },
-            { title: '사랑은 끝이 없어요', src: 'part2/사랑은 끝이 없어요.mp3' },
-            { title: '사랑은 반응이다', src: 'part2/사랑은 반응이다.mp3' },
-            { title: '사랑은 변함이 없습니다 Ver.2', src: 'part2/사랑은 변함이 없습니다 Ver.2.mp3' },
-            { title: '사랑은 변함이 없습니다', src: 'part2/사랑은 변함이 없습니다.mp3' },
-            { title: '사랑은 영원하다', src: 'part2/사랑은 영원하다.mp3' },
-            { title: '사랑은 이뤄야 한다', src: 'part2/사랑은 이뤄야 한다.mp3' },
-            { title: '사랑은 하나님 마음이야', src: 'part2/사랑은 하나님 마음이야.mp3' },
-            { title: '사랑은 혼이다', src: 'part2/사랑은 혼이다.mp3' },
-            { title: '사랑의 감사', src: 'part2/사랑의 감사.mp3' },
-            { title: '사랑의 거리로 봄 나들이', src: 'part2/사랑의 거리로 봄 나들이.mp3' },
-            { title: '사랑의 길', src: 'part2/사랑의 길.mp3' },
-            { title: '사랑의 나라를 잊지 말아라', src: 'part2/사랑의 나라를 잊지 말아라.mp3' },
-            { title: '사랑의 노래를 불러라', src: 'part2/사랑의 노래를 불러라.mp3' },
-            { title: '사랑의 노래를 불러보자 (Remake Ver.)', src: 'part2/사랑의 노래를 불러보자 (Remake Ver.).mp3' },
-            { title: '사랑의 노래를 불러보자', src: 'part2/사랑의 노래를 불러보자.mp3' },
-            { title: '사랑의 목소리로', src: 'part2/사랑의 목소리로.mp3' },
-            { title: '사랑의 목적을 이루었네', src: 'part2/사랑의 목적을 이루었네.mp3' },
-            { title: '사랑의 삶이야', src: 'part2/사랑의 삶이야.mp3' },
-            { title: '사랑의 신부들아, 안녕', src: 'part2/사랑의 신부들아, 안녕.mp3' },
-            { title: '사랑의 혼인 잔치 Ver.1', src: 'part2/사랑의 혼인 잔치 Ver.1.mp3' },
-            { title: '사랑의 혼인 잔치 Ver.2', src: 'part2/사랑의 혼인 잔치 Ver.2.mp3' },
-            { title: '사랑하기 때문에', src: 'part2/사랑하기 때문에.mp3' },
-            { title: '사랑하기로 해버렸습니다', src: 'part2/사랑하기로 해버렸습니다.mp3' },
-            { title: '사랑하기에', src: 'part2/사랑하기에.mp3' },
-            { title: '사랑하는 것이 나의 낙입니다', src: 'part2/사랑하는 것이 나의 낙입니다.mp3' },
-            { title: '사랑하는 능력입니다', src: 'part2/사랑하는 능력입니다.mp3' },
-            { title: '사랑하니 또 만났네', src: 'part2/사랑하니 또 만났네.mp3' },
-            { title: '사랑하라', src: 'part2/사랑하라.mp3' },
-            { title: '사랑하며 살리라', src: 'part2/사랑하며 살리라.mp3' },
-            { title: '사랑한다면', src: 'part2/사랑한다면.mp3' },
-            { title: '사랑해서 밤이 깊도록', src: 'part2/사랑해서 밤이 깊도록.mp3' },
-            { title: '사랑해서 불러봅니다', src: 'part2/사랑해서 불러봅니다.mp3' },
-            { title: '사랑해서 좋아해서', src: 'part2/사랑해서 좋아해서.mp3' },
+              const playlist = [
+        // --- Part 1 ---
+  { title: "My Way remix", src: "part1/My Way remix.mp3" },
+  { title: "My way", src: "part1/My way.mp3" },
+  { title: "가는 길", src: "part1/가는 길.mp3" },
+  { title: "가랑비", src: "part1/가랑비.mp3" },
+  { title: "가르쳐 주었네", src: "part1/가르쳐 주었네.mp3" },
+  { title: "가자 때가 됐다 remix", src: "part1/가자 때가 됐다 remix.mp3" },
+  { title: "가자 때가 됐다", src: "part1/가자 때가 됐다.mp3" },
+  { title: "가자 별봉정으로", src: "part1/가자 별봉정으로.mp3" },
+  { title: "가자 오자 대둔산으로", src: "part1/가자 오자 대둔산으로.mp3" },
+  { title: "감동되었네 감화되었네", src: "part1/감동되었네 감화되었네.mp3" },
+  { title: "걱정 말고 따라오너라", src: "part1/걱정 말고 따라오너라.mp3" },
+  { title: "걸작은 연출", src: "part1/걸작은 연출.mp3" },
+  { title: "고향 산 너머", src: "part1/고향 산 너머.mp3" },
+  { title: "골든 타임 놓치지 말아라", src: "part1/골든 타임 놓치지 말아라.mp3" },
+  { title: "골인이다", src: "part1/골인이다.mp3" },
+  { title: "광명한 새벽별아", src: "part1/광명한 새벽별아.mp3" },
+  { title: "구상대로 행한다면", src: "part1/구상대로 행한다면.mp3" },
+  { title: "구상을 주셨네", src: "part1/구상을 주셨네.mp3" },
+  { title: "굳건히 가야 한다", src: "part1/굳건히 가야 한다.mp3" },
+  { title: "굳건히 서서", src: "part1/굳건히 서서.mp3" },
+  { title: "귀하게 써야 한다", src: "part1/귀하게 써야 한다.mp3" },
+  { title: "그대 통하여 하나님 삶을", src: "part1/그대 통하여 하나님 삶을.mp3" },
+  { title: "그때가 되면", src: "part1/그때가 되면.mp3" },
+  { title: "극히 담대하라", src: "part1/극히 담대하라.mp3" },
+  { title: "기다려요", src: "part1/기다려요.mp3" },
+  { title: "기다렸지 긴긴 날을", src: "part1/기다렸지 긴긴 날을.mp3" },
+  { title: "기도다 기도", src: "part1/기도다 기도.mp3" },
+  { title: "기도동산아", src: "part1/기도동산아.mp3" },
+  { title: "기도동산이어라", src: "part1/기도동산이어라.mp3" },
+  { title: "기도를 못 했잖아요", src: "part1/기도를 못 했잖아요.mp3" },
+  { title: "기도의 님아", src: "part1/기도의 님아.mp3" },
+  { title: "기도하고 또 기도하라", src: "part1/기도하고 또 기도하라.mp3" },
+  { title: "기도합니다", src: "part1/기도합니다.mp3" },
+  { title: "기적의 날씨", src: "part1/기적의 날씨.mp3" },
+  { title: "기적의 역사다", src: "part1/기적의 역사다.mp3" },
+  { title: "길 잃은 사람, 길 찾은 사람", src: "part1/길 잃은 사람, 길 찾은 사람.mp3" },
+  { title: "깊어 가는 여름밤", src: "part1/깊어 가는 여름밤.mp3" },
+  { title: "깨끗한 계곡에서", src: "part1/깨끗한 계곡에서.mp3" },
+  { title: "깨닫도록 하였다", src: "part1/깨닫도록 하였다.mp3" },
+  { title: "깨달아라", src: "part1/깨달아라.mp3" },
+    
+    // --- Part 2 ---
+    { title: '님은 태양 같아', src: 'part2/님은 태양 같아.mp3', hint: '' },
+    { title: '님이 나타나거들랑', src: 'part2/님이 나타나거들랑.mp3', hint: '' },
+    { title: '님이여', src: 'part2/님이여.mp3', hint: '' },
+    { title: '달이 간다 나도 간다', src: 'part2/달이 간다 나도 간다.mp3', hint: '' },
+    { title: '대둔산 용문골 어느 날 밤에', src: 'part2/대둔산 용문골 어느 날 밤에.mp3', hint: '' },
+    { title: '더 잘하기 삶이다', src: 'part2/더 잘하기 삶이다.mp3', hint: '' },
+    { title: '더 잘하라', src: 'part2/더 잘하라.mp3', hint: '' },
+    { title: '동에 번쩍 서에 번쩍', src: 'part2/동에 번쩍 서에 번쩍.mp3', hint: '' },
+    { title: '동해 바다다', src: 'part2/동해 바다다.mp3', hint: '' },
+    { title: '따라가세', src: 'part2/따라가세.mp3', hint: '' },
+    { title: '따라와요 묻지말고', src: 'part2/따라와요 묻지말고.mp3', hint: '' },
+    { title: '땅의 황금천국 월명동', src: 'part2/땅의 황금천국 월명동.mp3', hint: '' },
+    { title: '때가 왔다', src: 'part2/때가 왔다.mp3', hint: '' },
+    { title: '때의 하나님이시다', src: 'part2/때의 하나님이시다.mp3', hint: '' },
+    { title: '떨어질 수 없는 운명', src: 'part2/떨어질 수 없는 운명.mp3', hint: '' },
+    { title: '또 만났네', src: 'part2/또 만났네.mp3', hint: '' },
+    { title: '뛰고 놀았네', src: 'part2/뛰고 놀았네.MP3', hint: '' },
+    { title: '뛰자 달리자 쏟아지기 전에', src: 'part2/뛰자 달리자 쏟아지기 전에.mp3', hint: '' },
+    { title: '뜻을 따라 살아갑니다', src: 'part2/뜻을 따라 살아갑니다.mp3', hint: '' },
+    { title: '마음을 담대히', src: 'part2/마음을 담대히.mp3', hint: '' },
+    { title: '마지막 천 년 역사 혼인 잔치', src: 'part2/마지막 천 년 역사 혼인 잔치.mp3', hint: '' },
+    { title: '마지막 한마디 남기고 간다', src: 'part2/마지막 한마디 남기고 간다.mp3', hint: '' },
+    { title: '막는다고 못 할쏘냐', src: 'part2/막는다고 못 할쏘냐.mp3', hint: '' },
+    { title: '만들어라', src: 'part2/만들어라.mp3', hint: '' },
+    { title: '만물도 하나님 찬양', src: 'part2/만물도 하나님 찬양.mp3', hint: '' },
+    { title: '만왕의 왕 만주의 주', src: 'part2/만왕의 왕 만주의 주.mp3', hint: '' },
+    { title: '많고 많은 사람 중에', src: 'part2/많고 많은 사람 중에.mp3', hint: '' },
+    { title: '말처럼 뛰자', src: 'part2/말처럼 뛰자.mp3', hint: '' },
+    { title: '멋있게 뛰는 거야', src: 'part2/멋있게 뛰는 거야.mp3', hint: '' },
+    { title: '멋있게 뛰는거야 Ver.2', src: 'part2/멋있게 뛰는거야 Ver.2.mp3', hint: '' },
+    { title: '명솔1', src: 'part2/명솔1.mp3', hint: '' },
+    { title: '명솔2', src: 'part2/명솔2.mp3', hint: '' },
+    { title: '모여온다', src: 'part2/모여온다.mp3', hint: '' },
+    { title: '목적 있는 곳에 뜻이 있다', src: 'part2/목적 있는 곳에 뜻이 있다.mp3', hint: '' },
+    { title: '목적을 이루며 가야 한다', src: 'part2/목적을 이루며 가야 한다.mp3', hint: '' },
+    { title: '목적을 향하여', src: 'part2/목적을 향하여.mp3', hint: '' },
+    { title: '무슨 일이야', src: 'part2/무슨 일이야.mp3', hint: '' },
+    { title: '무엇이 불가능 하느냐', src: 'part2/무엇이 불가능 하느냐.mp3', hint: '' },
+    { title: '무조건 하기다', src: 'part2/무조건 하기다.mp3', hint: '' },
+    { title: '미련도 없이 따라가렵니다', src: 'part2/미련도 없이 따라가렵니다.mp3', hint: '' },
+    { title: '미련없는 사랑', src: 'part2/미련없는 사랑.mp3', hint: '' },
+    { title: '미련없이 살았네', src: 'part2/미련없이 살았네.mp3', hint: '' },
+    { title: '믿으라 내 말을', src: 'part2/믿으라 내 말을.mp3', hint: '' },
+    { title: '바다가 길이라면', src: 'part2/바다가 길이라면.mp3', hint: '' },
+    { title: '반짝반짝', src: 'part2/반짝반짝.mp3', hint: '' },
+    { title: '받아주옵소서', src: 'part2/받아주옵소서.mp3', hint: '' },
+    { title: '밝은 빛을 따라서', src: 'part2/밝은 빛을 따라서.mp3', hint: '' },
+    { title: '배치다 위치다', src: 'part2/배치다 위치다.mp3', hint: '' },
+    { title: '백보좌 야심작', src: 'part2/백보좌 야심작.mp3', hint: '' },
+    { title: '범사에 기도하라', src: 'part2/범사에 기도하라.mp3', hint: '' },
+    { title: '변치 말아라 잊지 말아라', src: 'part2/변치 말아라 잊지 말아라.mp3', hint: '' },
+    { title: '변치 아니하시네', src: 'part2/변치 아니하시네.mp3', hint: '' },
+    { title: '변치 않고 가렵니다', src: 'part2/변치 않고 가렵니다.mp3', hint: '' },
+    { title: '변해야 한다', src: 'part2/변해야 한다.mp3', hint: '' },
+    { title: '별 하나 나 하나', src: 'part2/별 하나 나 하나.mp3', hint: '' },
+    { title: '별들이 부른다', src: 'part2/별들이 부른다.mp3', hint: '' },
+    { title: '보호해 주신 성령님', src: 'part2/보호해 주신 성령님.mp3', hint: '' },
+    { title: '봄, 여름', src: 'part2/봄, 여름.mp3', hint: '' },
+    { title: '봄날 되면', src: 'part2/봄날 되면.mp3', hint: '' },
+    { title: '봄날의 밤', src: 'part2/봄날의 밤.MP3', hint: '' },
+    { title: '봄바람 타고', src: 'part2/봄바람 타고.mp3', hint: '' },
+    { title: '봄이 왔습니다', src: 'part2/봄이 왔습니다.mp3', hint: '' },
+    { title: '부두의 고독2', src: 'part2/부두의 고독2.mp3', hint: '' },
+    { title: '부지런히 배워라', src: 'part2/부지런히 배워라.mp3', hint: '' },
+    { title: '빨리하라', src: 'part2/빨리하라.mp3', hint: '' },
+    { title: '사람은 생각으로 살아간다', src: 'part2/사람은 생각으로 살아간다.mp3', hint: '' },
+    { title: '사랑, 영원까지', src: 'part2/사랑, 영원까지.mp3', hint: '' },
+    { title: '사랑은 끝이 없어요', src: 'part2/사랑은 끝이 없어요.mp3', hint: '' },
+    { title: '사랑은 반응이다', src: 'part2/사랑은 반응이다.mp3', hint: '' },
+    { title: '사랑은 변함이 없습니다 Ver.2', src: 'part2/사랑은 변함이 없습니다 Ver.2.mp3', hint: '' },
+    { title: '사랑은 변함이 없습니다', src: 'part2/사랑은 변함이 없습니다.mp3', hint: '' },
+    { title: '사랑은 영원하다', src: 'part2/사랑은 영원하다.mp3', hint: '' },
+    { title: '사랑은 이뤄야 한다', src: 'part2/사랑은 이뤄야 한다.mp3', hint: '' },
+    { title: '사랑은 하나님 마음이야', src: 'part2/사랑은 하나님 마음이야.mp3', hint: '' },
+    { title: '사랑은 혼이다', src: 'part2/사랑은 혼이다.mp3', hint: '' },
+    { title: '사랑의 감사', src: 'part2/사랑의 감사.mp3', hint: '' },
+    { title: '사랑의 거리로 봄 나들이', src: 'part2/사랑의 거리로 봄 나들이.mp3', hint: '' },
+    { title: '사랑의 길', src: 'part2/사랑의 길.mp3', hint: '' },
+    { title: '사랑의 나라를 잊지 말아라', src: 'part2/사랑의 나라를 잊지 말아라.mp3', hint: '' },
+    { title: '사랑의 노래를 불러라', src: 'part2/사랑의 노래를 불러라.mp3', hint: '' },
+    { title: '사랑의 노래를 불러보자 (Remake Ver.)', src: 'part2/사랑의 노래를 불러보자 (Remake Ver.).mp3', hint: '' },
+    { title: '사랑의 노래를 불러보자', src: 'part2/사랑의 노래를 불러보자.mp3', hint: '' },
+    { title: '사랑의 목소리로', src: 'part2/사랑의 목소리로.mp3', hint: '' },
+    { title: '사랑의 목적을 이루었네', src: 'part2/사랑의 목적을 이루었네.mp3', hint: '' },
+    { title: '사랑의 삶이야', src: 'part2/사랑의 삶이야.mp3', hint: '' },
+    { title: '사랑의 신부들아, 안녕', src: 'part2/사랑의 신부들아, 안녕.mp3', hint: '' },
+    { title: '사랑의 혼인 잔치 Ver.1', src: 'part2/사랑의 혼인 잔치 Ver.1.mp3', hint: '' },
+    { title: '사랑의 혼인 잔치 Ver.2', src: 'part2/사랑의 혼인 잔치 Ver.2.mp3', hint: '' },
+    { title: '사랑하기 때문에', src: 'part2/사랑하기 때문에.mp3', hint: '' },
+    { title: '사랑하기로 해버렸습니다', src: 'part2/사랑하기로 해버렸습니다.mp3', hint: '' },
+    { title: '사랑하기에', src: 'part2/사랑하기에.mp3', hint: '' },
+    { title: '사랑하는 것이 나의 낙입니다', src: 'part2/사랑하는 것이 나의 낙입니다.mp3', hint: '' },
+    { title: '사랑하는 능력입니다', src: 'part2/사랑하는 능력입니다.mp3', hint: '' },
+    { title: '사랑하니 또 만났네', src: 'part2/사랑하니 또 만났네.mp3', hint: '' },
+    { title: '사랑하라', src: 'part2/사랑하라.mp3', hint: '' },
+    { title: '사랑하며 살리라', src: 'part2/사랑하며 살리라.mp3', hint: '' },
+    { title: '사랑한다면', src: 'part2/사랑한다면.mp3', hint: '' },
+    { title: '사랑해서 밤이 깊도록', src: 'part2/사랑해서 밤이 깊도록.mp3', hint: '' },
+    { title: '사랑해서 불러봅니다', src: 'part2/사랑해서 불러봅니다.mp3', hint: '' },
+    { title: '사랑해서 좋아해서', src: 'part2/사랑해서 좋아해서.mp3', hint: '' },
 
-            // --- Part 3 ---
-            { title: '사랑해요 죽도록 충성해요', src: 'part3/사랑해요 죽도록 충성해요.mp3' },
-            { title: '사명의 길', src: 'part3/사명의 길.mp3' },
-            { title: '사연도 깊고 깊어', src: 'part3/사연도 깊고 깊어.mp3' },
-            { title: '사연을 띄워 주세요', src: 'part3/사연을 띄워 주세요.mp3' },
-            { title: '사연의 날', src: 'part3/사연의 날.mp3' },
-            { title: '사탄아 물러가라', src: 'part3/사탄아 물러가라.mp3' },
-            { title: '산 자는 신이 된다', src: 'part3/산 자는 신이 된다.mp3' },
-            { title: '산 중에 산', src: 'part3/산 중에 산.mp3' },
-            { title: '삶의 영광', src: 'part3/삶의 영광.mp3' },
-            { title: '상천하지 미의 여신 성령님', src: 'part3/상천하지 미의 여신 성령님.mp3' },
-            { title: '새 길을 만들었습니다', src: 'part3/새 길을 만들었습니다.mp3' },
-            { title: '새 시대 새로운 역사다', src: 'part3/새 시대 새로운 역사다.mp3' },
-            { title: '새롭게 새롭게', src: 'part3/새롭게 새롭게.mp3' },
-            { title: '새벽을 깨워라', src: 'part3/새벽을 깨워라.mp3' },
-            { title: '생각이 부지런해야 한다', src: 'part3/생각이 부지런해야 한다.mp3' },
-            { title: '생각하기 따라서', src: 'part3/생각하기 따라서.mp3' },
-            { title: '생명길을 찾았네', src: 'part3/생명길을 찾았네.mp3' },
-            { title: '서둘러서 빨리 하라', src: 'part3/서둘러서 빨리 하라.mp3' },
-            { title: '서로 맞대고 보도록', src: 'part3/서로 맞대고 보도록.mp3' },
-            { title: '섭리 신학', src: 'part3/섭리 신학.mp3' },
-            { title: '성령 만난 날에', src: 'part3/성령 만난 날에.mp3' },
-            { title: '성령 치료', src: 'part3/성령 치료.mp3' },
-            { title: '성령과 주와 함께 생명을 가르쳐라', src: 'part3/성령과 주와 함께 생명을 가르쳐라.mp3' },
-            { title: '성령님 길을 따라갑니다', src: 'part3/성령님 길을 따라갑니다.mp3' },
-            { title: '성령님 따라가렵니다', src: 'part3/성령님 따라가렵니다.mp3' },
-            { title: '성령님 따라서 가기로 했네', src: 'part3/성령님 따라서 가기로 했네.mp3' },
-            { title: '성령님 역사합니다', src: 'part3/성령님 역사합니다.mp3' },
-            { title: '성령님 좋아해 사랑해', src: 'part3/성령님 좋아해 사랑해.mp3' },
-            { title: '성령님 찾으라', src: 'part3/성령님 찾으라.mp3' },
-            { title: '성령의 길', src: 'part3/성령의 길.mp3' },
-            { title: '성령의 말씀', src: 'part3/성령의 말씀.mp3' },
-            { title: '성령의 바람타고 날아갑니다 (EDM ver.)', src: 'part3/성령의 바람타고 날아갑니다 (EDM ver.).mp3' },
-            { title: '성령의 바람타고 날아갑니다', src: 'part3/성령의 바람타고 날아갑니다.mp3' },
-            { title: '성삼위 모셔 놓고 영광', src: 'part3/성삼위 모셔 놓고 영광.mp3' },
-            { title: '성지땅의 백합화야', src: 'part3/성지땅의 백합화야.mp3' },
-            { title: '세상을 이기자', src: 'part3/세상을 이기자.mp3' },
-            { title: '솔의 사연', src: 'part3/솔의 사연.mp3' },
-            { title: '솔항기 풍기는 내 고향은', src: 'part3/솔항기 풍기는 내 고향은.mp3' },
-            { title: '솔향기 (시낭송)', src: 'part3/솔향기 (시낭송).mp3' },
-            { title: '솔향기', src: 'part3/솔향기.mp3' },
-            { title: '순간의 기회다', src: 'part3/순간의 기회다.mp3' },
-            { title: '순간의 때를 놓치지 말아라', src: 'part3/순간의 때를 놓치지 말아라.mp3' },
-            { title: '스스로 조심하며 살아야 한다', src: 'part3/스스로 조심하며 살아야 한다.mp3' },
-            { title: '스타 중의 스타 2019 송구영신 ver.', src: 'part3/스타 중의 스타 2019 송구영신 ver..mp3' },
-            { title: '스타 중의 스타', src: 'part3/스타 중의 스타.mp3' },
-            { title: '승리는 담대다', src: 'part3/승리는 담대다.mp3' },
-            { title: '승리할 것이다', src: 'part3/승리할 것이다.mp3' },
-            { title: '승리했다 이기었다', src: 'part3/승리했다 이기었다.mp3' },
-            { title: '시의 여인이여', src: 'part3/시의 여인이여.mp3' },
-            { title: '시작과 끝', src: 'part3/시작과 끝.mp3' },
-            { title: '신부들의 생명의 역사다', src: 'part3/신부들의 생명의 역사다.mp3' },
-            { title: '신부야 굳세어라', src: 'part3/신부야 굳세어라.mp3' },
-            { title: '신부의 삶', src: 'part3/신부의 삶.mp3' },
-            { title: '신유의 능력', src: 'part3/신유의 능력.mp3' },
-            { title: '썬스타 응원을 하자', src: 'part3/썬스타 응원을 하자.mp3' },
-            { title: '아름다운 대둔산 절경아', src: 'part3/아름다운 대둔산 절경아.mp3' },
-            { title: '아름다운 모습을 보고 싶단다', src: 'part3/아름다운 모습을 보고 싶단다.mp3' },
-            { title: '악한 마음 굳세어라', src: 'part3/악한 마음 굳세어라.mp3' },
-            { title: '안녕 굿바이', src: 'part3/안녕 굿바이.mp3' },
-            { title: '알고 대하는 자 귀하다', src: 'part3/알고 대하는 자 귀하다.mp3' },
-            { title: '어머님 사랑이시어라', src: 'part3/어머님 사랑이시어라.mp3' },
-            { title: '어서 달려가고 뛰어가자', src: 'part3/어서 달려가고 뛰어가자.mp3' },
-            { title: '언제나 한 몸 되어', src: 'part3/언제나 한 몸 되어.mp3' },
-            { title: '여기서 천 년 역사 시작하였네', src: 'part3/여기서 천 년 역사 시작하였네.mp3' },
-            { title: '여자, 남자', src: 'part3/여자, 남자.mp3' },
-            { title: '여호와는 나의 반석이시니', src: 'part3/여호와는 나의 반석이시니.mp3' },
-            { title: '여호와는 나의 사랑이시니', src: 'part3/여호와는 나의 사랑이시니.mp3' },
-            { title: '역사의 노래', src: 'part3/역사의 노래.mp3' },
-            { title: '역사의 지도자들', src: 'part3/역사의 지도자들.mp3' },
-            { title: '영광 돌립니다', src: 'part3/영광 돌립니다.mp3' },
-            { title: '영광', src: 'part3/영광.mp3' },
-            { title: '영광을 돌려보내세', src: 'part3/영광을 돌려보내세.mp3' },
-            { title: '영광의 걸작품', src: 'part3/영광의 걸작품.mp3' },
-            { title: '영원토록 하나님 궁에서', src: 'part3/영원토록 하나님 궁에서.mp3' },
-            { title: '영원한 길', src: 'part3/영원한 길.mp3' },
-            { title: '영원한 목적을 이루고 말았네', src: 'part3/영원한 목적을 이루고 말았네.mp3' },
-            { title: '영원한 사랑 Ver.2', src: 'part3/영원한 사랑 Ver.2.mp3' },
-            { title: '영원한 사랑', src: 'part3/영원한 사랑.mp3' },
-            { title: '영원한 사랑만이', src: 'part3/영원한 사랑만이.mp3' },
-            { title: '영원한 사랑의 삶 Ver.1', src: 'part3/영원한 사랑의 삶 Ver.1.mp3' },
-            { title: '영원한 사랑의 역사', src: 'part3/영원한 사랑의 역사.mp3' },
-            { title: '영원한 영생길', src: 'part3/영원한 영생길.mp3' },
-            { title: '영원한 우리의 삶은 아름다워요', src: 'part3/영원한 우리의 삶은 아름다워요.mp3' },
-            { title: '영원한 존재자', src: 'part3/영원한 존재자.mp3' },
-            { title: '영의 사랑은 (Dance Ver.)', src: 'part3/영의 사랑은 (Dance Ver.).mp3' },
-            { title: '영의 사랑은', src: 'part3/영의 사랑은.mp3' },
-            { title: '예비하라 도적같이 만나리라', src: 'part3/예비하라 도적같이 만나리라.mp3' },
-            { title: '오늘도 하늘의 가수가 되어', src: 'part3/오늘도 하늘의 가수가 되어.mp3' },
-            { title: '오늘은 그날이야1', src: 'part3/오늘은 그날이야1.mp3' },
-            { title: '오늘은 그날이야2', src: 'part3/오늘은 그날이야2.mp3' },
-            { title: '오늘은 바닷가로', src: 'part3/오늘은 바닷가로.mp3' },
-            { title: '오늘은 여기서', src: 'part3/오늘은 여기서.mp3' },
-            { title: '오로지 일편단심', src: 'part3/오로지 일편단심.mp3' },
-            { title: '오전육기, 정녕코 쌓고 말았네', src: 'part3/오전육기, 정녕코 쌓고 말았네.mp3' },
-            { title: '오직 주님 주님뿐이에요', src: 'part3/오직 주님 주님뿐이에요.mp3' },
-            { title: '오직 하나님께 맡기고서', src: 'part3/오직 하나님께 맡기고서.mp3' },
-            { title: '온 세상을 누비며 다스리자', src: 'part3/온 세상을 누비며 다스리자.mp3' },
-            { title: '온몸을 날리면서 영광', src: 'part3/온몸을 날리면서 영광.mp3' },
-            { title: '와우 아시아', src: 'part3/와우 아시아.mp3' },
-            { title: '왜 갔는지 왜 그랬는지', src: 'part3/왜 갔는지 왜 그랬는지.mp3' },
+    // --- Part 3 ---
+    { title: '사랑해요 죽도록 충성해요', src: 'part3/사랑해요 죽도록 충성해요.mp3', hint: '' },
+    { title: '사명의 길', src: 'part3/사명의 길.mp3', hint: '' },
+    { title: '사연도 깊고 깊어', src: 'part3/사연도 깊고 깊어.mp3', hint: '' },
+    { title: '사연을 띄워 주세요', src: 'part3/사연을 띄워 주세요.mp3', hint: '' },
+    { title: '사연의 날', src: 'part3/사연의 날.mp3', hint: '' },
+    { title: '사탄아 물러가라', src: 'part3/사탄아 물러가라.mp3', hint: '' },
+    { title: '산 자는 신이 된다', src: 'part3/산 자는 신이 된다.mp3', hint: '' },
+    { title: '산 중에 산', src: 'part3/산 중에 산.mp3', hint: '' },
+    { title: '삶의 영광', src: 'part3/삶의 영광.mp3', hint: '' },
+    { title: '상천하지 미의 여신 성령님', src: 'part3/상천하지 미의 여신 성령님.mp3', hint: '' },
+    { title: '새 길을 만들었습니다', src: 'part3/새 길을 만들었습니다.mp3', hint: '' },
+    { title: '새 시대 새로운 역사다', src: 'part3/새 시대 새로운 역사다.mp3', hint: '' },
+    { title: '새롭게 새롭게', src: 'part3/새롭게 새롭게.mp3', hint: '' },
+    { title: '새벽을 깨워라', src: 'part3/새벽을 깨워라.mp3', hint: '' },
+    { title: '생각이 부지런해야 한다', src: 'part3/생각이 부지런해야 한다.mp3', hint: '' },
+    { title: '생각하기 따라서', src: 'part3/생각하기 따라서.mp3', hint: '' },
+    { title: '생명길을 찾았네', src: 'part3/생명길을 찾았네.mp3', hint: '' },
+    { title: '서둘러서 빨리 하라', src: 'part3/서둘러서 빨리 하라.mp3', hint: '' },
+    { title: '서로 맞대고 보도록', src: 'part3/서로 맞대고 보도록.mp3', hint: '' },
+    { title: '섭리 신학', src: 'part3/섭리 신학.mp3', hint: '' },
+    { title: '성령 만난 날에', src: 'part3/성령 만난 날에.mp3', hint: '' },
+    { title: '성령 치료', src: 'part3/성령 치료.mp3', hint: '' },
+    { title: '성령과 주와 함께 생명을 가르쳐라', src: 'part3/성령과 주와 함께 생명을 가르쳐라.mp3', hint: '' },
+    { title: '성령님 길을 따라갑니다', src: 'part3/성령님 길을 따라갑니다.mp3', hint: '' },
+    { title: '성령님 따라가렵니다', src: 'part3/성령님 따라가렵니다.mp3', hint: '' },
+    { title: '성령님 따라서 가기로 했네', src: 'part3/성령님 따라서 가기로 했네.mp3', hint: '' },
+    { title: '성령님 역사합니다', src: 'part3/성령님 역사합니다.mp3', hint: '' },
+    { title: '성령님 좋아해 사랑해', src: 'part3/성령님 좋아해 사랑해.mp3', hint: '' },
+    { title: '성령님 찾으라', src: 'part3/성령님 찾으라.mp3', hint: '' },
+    { title: '성령의 길', src: 'part3/성령의 길.mp3', hint: '' },
+    { title: '성령의 말씀', src: 'part3/성령의 말씀.mp3', hint: '' },
+    { title: '성령의 바람타고 날아갑니다 (EDM ver.)', src: 'part3/성령의 바람타고 날아갑니다 (EDM ver.).mp3', hint: '' },
+    { title: '성령의 바람타고 날아갑니다', src: 'part3/성령의 바람타고 날아갑니다.mp3', hint: '' },
+    { title: '성삼위 모셔 놓고 영광', src: 'part3/성삼위 모셔 놓고 영광.mp3', hint: '' },
+    { title: '성지땅의 백합화야', src: 'part3/성지땅의 백합화야.mp3', hint: '' },
+    { title: '세상을 이기자', src: 'part3/세상을 이기자.mp3', hint: '' },
+    { title: '솔의 사연', src: 'part3/솔의 사연.mp3', hint: '' },
+    { title: '솔항기 풍기는 내 고향은', src: 'part3/솔항기 풍기는 내 고향은.mp3', hint: '' },
+    { title: '솔향기 (시낭송)', src: 'part3/솔향기 (시낭송).mp3', hint: '' },
+    { title: '솔향기', src: 'part3/솔향기.mp3', hint: '' },
+    { title: '순간의 기회다', src: 'part3/순간의 기회다.mp3', hint: '' },
+    { title: '순간의 때를 놓치지 말아라', src: 'part3/순간의 때를 놓치지 말아라.mp3', hint: '' },
+    { title: '스스로 조심하며 살아야 한다', src: 'part3/스스로 조심하며 살아야 한다.mp3', hint: '' },
+    { title: '스타 중의 스타 2019 송구영신 ver.', src: 'part3/스타 중의 스타 2019 송구영신 ver..mp3', hint: '' },
+    { title: '스타 중의 스타', src: 'part3/스타 중의 스타.mp3', hint: '' },
+    { title: '승리는 담대다', src: 'part3/승리는 담대다.mp3', hint: '' },
+    { title: '승리할 것이다', src: 'part3/승리할 것이다.mp3', hint: '' },
+    { title: '승리했다 이기었다', src: 'part3/승리했다 이기었다.mp3', hint: '' },
+    { title: '시의 여인이여', src: 'part3/시의 여인이여.mp3', hint: '' },
+    { title: '시작과 끝', src: 'part3/시작과 끝.mp3', hint: '' },
+    { title: '신부들의 생명의 역사다', src: 'part3/신부들의 생명의 역사다.mp3', hint: '' },
+    { title: '신부야 굳세어라', src: 'part3/신부야 굳세어라.mp3', hint: '' },
+    { title: '신부의 삶', src: 'part3/신부의 삶.mp3', hint: '' },
+    { title: '신유의 능력', src: 'part3/신유의 능력.mp3', hint: '' },
+    { title: '썬스타 응원을 하자', src: 'part3/썬스타 응원을 하자.mp3', hint: '' },
+    { title: '아름다운 대둔산 절경아', src: 'part3/아름다운 대둔산 절경아.mp3', hint: '' },
+    { title: '아름다운 모습을 보고 싶단다', src: 'part3/아름다운 모습을 보고 싶단다.mp3', hint: '' },
+    { title: '악한 마음 굳세어라', src: 'part3/악한 마음 굳세어라.mp3', hint: '' },
+    { title: '안녕 굿바이', src: 'part3/안녕 굿바이.mp3', hint: '' },
+    { title: '알고 대하는 자 귀하다', src: 'part3/알고 대하는 자 귀하다.mp3', hint: '' },
+    { title: '어머님 사랑이시어라', src: 'part3/어머님 사랑이시어라.mp3', hint: '' },
+    { title: '어서 달려가고 뛰어가자', src: 'part3/어서 달려가고 뛰어가자.mp3', hint: '' },
+    { title: '언제나 한 몸 되어', src: 'part3/언제나 한 몸 되어.mp3', hint: '' },
+    { title: '여기서 천 년 역사 시작하였네', src: 'part3/여기서 천 년 역사 시작하였네.mp3', hint: '' },
+    { title: '여자, 남자', src: 'part3/여자, 남자.mp3', hint: '' },
+    { title: '여호와는 나의 반석이시니', src: 'part3/여호와는 나의 반석이시니.mp3', hint: '' },
+    { title: '여호와는 나의 사랑이시니', src: 'part3/여호와는 나의 사랑이시니.mp3', hint: '' },
+    { title: '역사의 노래', src: 'part3/역사의 노래.mp3', hint: '' },
+    { title: '역사의 지도자들', src: 'part3/역사의 지도자들.mp3', hint: '' },
+    { title: '영광 돌립니다', src: 'part3/영광 돌립니다.mp3', hint: '' },
+    { title: '영광', src: 'part3/영광.mp3', hint: '' },
+    { title: '영광을 돌려보내세', src: 'part3/영광을 돌려보내세.mp3', hint: '' },
+    { title: '영광의 걸작품', src: 'part3/영광의 걸작품.mp3', hint: '' },
+    { title: '영원토록 하나님 궁에서', src: 'part3/영원토록 하나님 궁에서.mp3', hint: '' },
+    { title: '영원한 길', src: 'part3/영원한 길.mp3', hint: '' },
+    { title: '영원한 목적을 이루고 말았네', src: 'part3/영원한 목적을 이루고 말았네.mp3', hint: '' },
+    { title: '영원한 사랑 Ver.2', src: 'part3/영원한 사랑 Ver.2.mp3', hint: '' },
+    { title: '영원한 사랑', src: 'part3/영원한 사랑.mp3', hint: '' },
+    { title: '영원한 사랑만이', src: 'part3/영원한 사랑만이.mp3', hint: '' },
+    { title: '영원한 사랑의 삶 Ver.1', src: 'part3/영원한 사랑의 삶 Ver.1.mp3', hint: '' },
+    { title: '영원한 사랑의 역사', src: 'part3/영원한 사랑의 역사.mp3', hint: '' },
+    { title: '영원한 영생길', src: 'part3/영원한 영생길.mp3', hint: '' },
+    { title: '영원한 우리의 삶은 아름다워요', src: 'part3/영원한 우리의 삶은 아름다워요.mp3', hint: '' },
+    { title: '영원한 존재자', src: 'part3/영원한 존재자.mp3', hint: '' },
+    { title: '영의 사랑은 (Dance Ver.)', src: 'part3/영의 사랑은 (Dance Ver.).mp3', hint: '' },
+    { title: '영의 사랑은', src: 'part3/영의 사랑은.mp3', hint: '' },
+    { title: '예비하라 도적같이 만나리라', src: 'part3/예비하라 도적같이 만나리라.mp3', hint: '' },
+    { title: '오늘도 하늘의 가수가 되어', src: 'part3/오늘도 하늘의 가수가 되어.mp3', hint: '' },
+    { title: '오늘은 그날이야1', src: 'part3/오늘은 그날이야1.mp3', hint: '' },
+    { title: '오늘은 그날이야2', src: 'part3/오늘은 그날이야2.mp3', hint: '' },
+    { title: '오늘은 바닷가로', src: 'part3/오늘은 바닷가로.mp3', hint: '' },
+    { title: '오늘은 여기서', src: 'part3/오늘은 여기서.mp3', hint: '' },
+    { title: '오로지 일편단심', src: 'part3/오로지 일편단심.mp3', hint: '' },
+    { title: '오전육기, 정녕코 쌓고 말았네', src: 'part3/오전육기, 정녕코 쌓고 말았네.mp3', hint: '' },
+    { title: '오직 주님 주님뿐이에요', src: 'part3/오직 주님 주님뿐이에요.mp3', hint: '' },
+    { title: '오직 하나님께 맡기고서', src: 'part3/오직 하나님께 맡기고서.mp3', hint: '' },
+    { title: '온 세상을 누비며 다스리자', src: 'part3/온 세상을 누비며 다스리자.mp3', hint: '' },
+    { title: '온몸을 날리면서 영광', src: 'part3/온몸을 날리면서 영광.mp3', hint: '' },
+    { title: '와우 아시아', src: 'part3/와우 아시아.mp3', hint: '' },
+    { title: '왜 갔는지 왜 그랬는지', src: 'part3/왜 갔는지 왜 그랬는지.mp3', hint: '' },
 
-            // --- Part 4 ---
-            { title: '왜 이제 왔어', src: 'part4/왜 이제 왔어.mp3' },
-            { title: '왜 혼내', src: 'part4/왜 혼내.mp3' },
-            { title: '우리가 하렵니다', src: 'part4/우리가 하렵니다.mp3' },
-            { title: '우리는 찾았어요', src: 'part4/우리는 찾았어요.mp3' },
-            { title: '우리는 행해 왔습니다', src: 'part4/우리는 행해 왔습니다.mp3' },
-            { title: '우리도 크면', src: 'part4/우리도 크면.mp3' },
-            { title: '우리들의 낙이랍니다', src: 'part4/우리들의 낙이랍니다.mp3' },
-            { title: '우리를 위하여', src: 'part4/우리를 위하여.mp3' },
-            { title: '우리에게 채워주신 모든 것들', src: 'part4/우리에게 채워주신 모든 것들.mp3' },
-            { title: '우리와 함께하시는 삼위와 주께', src: 'part4/우리와 함께하시는 삼위와 주께.mp3' },
-            { title: '우리의 사랑은 영원한 사랑', src: 'part4/우리의 사랑은 영원한 사랑.mp3' },
-            { title: '우리의 삶은', src: 'part4/우리의 삶은.mp3' },
-            { title: '우리의 열매', src: 'part4/우리의 열매.mp3' },
-            { title: '우연이 아니야', src: 'part4/우연이 아니야.mp3' },
-            { title: '운명', src: 'part4/운명.mp3' },
-            { title: '운명의 길 ver2', src: 'part4/운명의 길 ver2.mp3' },
-            { title: '운명의 길', src: 'part4/운명의 길.mp3' },
-            { title: '울지 마라', src: 'part4/울지 마라.mp3' },
-            { title: '원망을 하지 말고', src: 'part4/원망을 하지 말고.mp3' },
-            { title: '원하는 것 받으려면', src: 'part4/원하는 것 받으려면.mp3' },
-            { title: '월명동, 정말로 멋있어', src: 'part4/월명동, 정말로 멋있어.mp3' },
-            { title: '월명동', src: 'part4/월명동.mp3' },
-            { title: '월명동에 달이 뜨거들랑', src: 'part4/월명동에 달이 뜨거들랑.mp3' },
-            { title: '의심하지 말고 나를 따라와요', src: 'part4/의심하지 말고 나를 따라와요.mp3' },
-            { title: '의인의 삶2', src: 'part4/의인의 삶2.mp3' },
-            { title: '이 날을 얼마나 기다렸다고', src: 'part4/이 날을 얼마나 기다렸다고.mp3' },
-            { title: '이 때라 네 믿음대로 되어라', src: 'part4/이 때라 네 믿음대로 되어라.mp3' },
-            { title: '이것이 표적의 역사다', src: 'part4/이것이 표적의 역사다.mp3' },
-            { title: '이도령이 춘향이 만나듯', src: 'part4/이도령이 춘향이 만나듯.mp3' },
-            { title: '이렇게 우리는 살았단다 (feat.R Piano)', src: 'part4/이렇게 우리는 살았단다 (feat.R Piano).mp3' },
-            { title: '이상세계가 시작되었다', src: 'part4/이상세계가 시작되었다.mp3' },
-            { title: '이제는 앞질러 간다 (Hiphop ver.)', src: 'part4/이제는 앞질러 간다 (Hiphop ver.).mp3' },
-            { title: '이제는 앞질러 간다', src: 'part4/이제는 앞질러 간다.mp3' },
-            { title: '이제는 하나님 웃으신다', src: 'part4/이제는 하나님 웃으신다.mp3' },
-            { title: '이제는 해야 한다', src: 'part4/이제는 해야 한다.mp3' },
-            { title: '이제는 행해야 한다', src: 'part4/이제는 행해야 한다.mp3' },
-            { title: '인생 백년 하루와 같은 삶이다', src: 'part4/인생 백년 하루와 같은 삶이다.mp3' },
-            { title: '인생은 감각이야', src: 'part4/인생은 감각이야.mp3' },
-            { title: '인생은 멋있게 사는거야 Ver.2', src: 'part4/인생은 멋있게 사는거야 Ver.2.mp3' },
-            { title: '인생은 멋있게 사는거야', src: 'part4/인생은 멋있게 사는거야.mp3' },
-            { title: '인생은 지금이 중하다', src: 'part4/인생은 지금이 중하다.mp3' },
-            { title: '인생의 낙 Acoustic Ver.', src: 'part4/인생의 낙 Acoustic Ver..mp3' },
-            { title: '인생의 낙', src: 'part4/인생의 낙.mp3' },
-            { title: '인생의 목적', src: 'part4/인생의 목적.mp3' },
-            { title: '인생이 늙기 전에', src: 'part4/인생이 늙기 전에.mp3' },
-            { title: '인연 Ver.1', src: 'part4/인연 Ver.1.mp3' },
-            { title: '인연 Ver.2', src: 'part4/인연 Ver.2.mp3' },
-            { title: '인연 Ver3. (Bossanova Ver.)', src: 'part4/인연 Ver3. (Bossanova Ver.).mp3' },
-            { title: '일생일작', src: 'part4/일생일작.mp3' },
-            { title: '잊지 말아라', src: 'part4/잊지 말아라.mp3' },
-            { title: '자연성전의 깊은 비밀', src: 'part4/자연성전의 깊은 비밀.mp3' },
-            { title: '재미있게 멋있게 만들기다 꾸미기다', src: 'part4/재미있게 멋있게 만들기다 꾸미기다.mp3' },
-            { title: '저 솔은 아름답다', src: 'part4/저 솔은 아름답다.mp3' },
-            { title: '저 영혼을 불러오라', src: 'part4/저 영혼을 불러오라.mp3' },
-            { title: '절대 믿음', src: 'part4/절대 믿음.mp3' },
-            { title: '젊은 날을 불태우며', src: 'part4/젊은 날을 불태우며.mp3' },
-            { title: '정녕코 이루었다', src: 'part4/정녕코 이루었다.mp3' },
-            { title: '정말로 좋아', src: 'part4/정말로 좋아.mp3' },
-            { title: '정신 차려', src: 'part4/정신 차려.mp3' },
-            { title: '제때 행하자', src: 'part4/제때 행하자.mp3' },
-            { title: '좋아서 가는데', src: 'part4/좋아서 가는데.mp3' },
-            { title: '좋아요', src: 'part4/좋아요.mp3' },
-            { title: '주 맞은 사람들 기뻐하누나', src: 'part4/주 맞은 사람들 기뻐하누나.mp3' },
-            { title: '주가 답이다', src: 'part4/주가 답이다.mp3' },
-            { title: '주께 맡기어라', src: 'part4/주께 맡기어라.mp3' },
-            { title: '주님 나신 곳에서', src: 'part4/주님 나신 곳에서.mp3' },
-            { title: '주님 네게 오신다', src: 'part4/주님 네게 오신다.mp3' },
-            { title: '주님 따라서 오르면서', src: 'part4/주님 따라서 오르면서.mp3' },
-            { title: '주님 탄생하셨네', src: 'part4/주님 탄생하셨네.mp3' },
-            { title: '주님 할 때 하지 못하면 못 해요', src: 'part4/주님 할 때 하지 못하면 못 해요.mp3' },
-            { title: '주님과 동행하는 생활입니다', src: 'part4/주님과 동행하는 생활입니다.mp3' },
-            { title: '주님께 맡겨버려라', src: 'part4/주님께 맡겨버려라.MP3' },
-            { title: '주님만 믿습니다', src: 'part4/주님만 믿습니다.mp3' },
-            { title: '주님밖에', src: 'part4/주님밖에.mp3' },
-            { title: '주님은 나의 소망이요 기쁨', src: 'part4/주님은 나의 소망이요 기쁨.mp3' },
-            { title: '주님은 내 곁에 (Rap ver.)', src: 'part4/주님은 내 곁에 (Rap ver.).mp3' },
-            { title: '주님은 내 곁에', src: 'part4/주님은 내 곁에.mp3' },
-            { title: '주님은 멋쟁이', src: 'part4/주님은 멋쟁이.mp3' },
-            { title: '주님은 살아오셨네', src: 'part4/주님은 살아오셨네.mp3' },
-            { title: '주님은 실천이야', src: 'part4/주님은 실천이야.mp3' },
-            { title: '주님은 이기고 이기신다', src: 'part4/주님은 이기고 이기신다.mp3' },
-            { title: '주님은 표적이야 기적이야', src: 'part4/주님은 표적이야 기적이야.mp3' },
-            { title: '주님을 사랑해서 이겨왔노라', src: 'part4/주님을 사랑해서 이겨왔노라.mp3' },
-            { title: '주님을 향한 사랑', src: 'part4/주님을 향한 사랑.mp3' },
-            { title: '주님이 다스리신다', src: 'part4/주님이 다스리신다.mp3' },
-            { title: '주신 것 가치 알고', src: 'part4/주신 것 가치 알고.mp3' },
-            { title: '주와 함께 해야 한다', src: 'part4/주와 함께 해야 한다.mp3' },
-            { title: '증거하였다', src: 'part4/증거하였다.mp3' },
-            { title: '지금, 지금이 중한 때다', src: 'part4/지금, 지금이 중한 때다.mp3' },
-            { title: '지금이 중하다2', src: 'part4/지금이 중하다2.mp3' },
-            { title: '지난날 추억하며', src: 'part4/지난날 추억하며.mp3' },
-            { title: '지혜와 명철로 해결합니다', src: 'part4/지혜와 명철로 해결합니다.mp3' },
-            { title: '지혜와 명철을 가르쳐 주마', src: 'part4/지혜와 명철을 가르쳐 주마.mp3' },
-            { title: '지혜와 명철의 성령님', src: 'part4/지혜와 명철의 성령님.mp3' },
-            { title: '지혜의 여인을 찾으러 가자', src: 'part4/지혜의 여인을 찾으러 가자.mp3' },
-            { title: '짝짝 짝짝쿵', src: 'part4/짝짝 짝짝쿵.mp3' },
-            { title: '짠짠짠', src: 'part4/짠짠짠.mp3' },
-            { title: '차원을 높여 보라', src: 'part4/차원을 높여 보라.mp3' },
-            { title: '찬란한 달', src: 'part4/찬란한 달.mp3' },
-            { title: '찬란한 하나님 모습', src: 'part4/찬란한 하나님 모습.mp3' },
-            
-            // --- Part 5 ---
-            { title: "추부 IC", src: "part5/추부 IC.mp3" },
-            { title: "큰 사람", src: "part5/큰 사람.mp3" },
-            { title: "평화와 영광", src: "part5/평화와 영광.mp3" },
-            { title: "푸른 하늘 별처럼", src: "part5/푸른 하늘 별처럼.mp3" },
-            { title: "하나님 궁, 계절마다 아름답다", src: "part5/하나님 궁, 계절마다 아름답다.mp3" },
-            { title: "하나님 궁전", src: "part5/하나님 궁전.mp3" },
-            { title: "하나님 뜻을 향해 가는 사람", src: "part5/하나님 뜻을 향해 가는 사람.mp3" },
-            { title: "하나님 마음에 드는 삶", src: "part5/하나님 마음에 드는 삶.mp3" },
-            { title: "하나님 말씀대로 살았네", src: "part5/하나님 말씀대로 살았네.mp3" },
-            { title: "하나님 몸이 되어서", src: "part5/하나님 몸이 되어서.mp3" },
-            { title: "하나님의 약속", src: "part5/하나님의 약속.mp3" },
-            { title: "하늘의 능력을 날마다 보며", src: "part5/하늘의 능력을 날마다 보며.mp3" },
-            { title: "하면 되는 거야", src: "part5/하면 되는 거야.mp3" },
-            { title: "한 알의 밀알로", src: "part5/한 알의 밀알로.mp3" },
-            { title: "할 때 해야 된다", src: "part5/할 때 해야 된다.mp3" },
-            { title: "행하고 달려라", src: "part5/행하고 달려라.mp3" },
-            { title: "형통의 길", src: "part5/형통의 길.mp3" },
-            { title: "황금천국 삶", src: "part5/황금천국 삶.mp3" },
-            { title: "휴거는 사랑이다", src: "part5/휴거는 사랑이다.mp3" },
-        ];
+    // --- Part 4 ---
+    { title: '왜 이제 왔어', src: 'part4/왜 이제 왔어.mp3', hint: '' },
+    { title: '왜 혼내', src: 'part4/왜 혼내.mp3', hint: '' },
+    { title: '우리가 하렵니다', src: 'part4/우리가 하렵니다.mp3', hint: '' },
+    { title: '우리는 찾았어요', src: 'part4/우리는 찾았어요.mp3', hint: '' },
+    { title: '우리는 행해 왔습니다', src: 'part4/우리는 행해 왔습니다.mp3', hint: '' },
+    { title: '우리도 크면', src: 'part4/우리도 크면.mp3', hint: '' },
+    { title: '우리들의 낙이랍니다', src: 'part4/우리들의 낙이랍니다.mp3', hint: '' },
+    { title: '우리를 위하여', src: 'part4/우리를 위하여.mp3', hint: '' },
+    { title: '우리에게 채워주신 모든 것들', src: 'part4/우리에게 채워주신 모든 것들.mp3', hint: '' },
+    { title: '우리와 함께하시는 삼위와 주께', src: 'part4/우리와 함께하시는 삼위와 주께.mp3', hint: '' },
+    { title: '우리의 사랑은 영원한 사랑', src: 'part4/우리의 사랑은 영원한 사랑.mp3', hint: '' },
+    { title: '우리의 삶은', src: 'part4/우리의 삶은.mp3', hint: '' },
+    { title: '우리의 열매', src: 'part4/우리의 열매.mp3', hint: '' },
+    { title: '우연이 아니야', src: 'part4/우연이 아니야.mp3', hint: '' },
+    { title: '운명', src: 'part4/운명.mp3', hint: '' },
+    { title: '운명의 길 ver2', src: 'part4/운명의 길 ver2.mp3', hint: '' },
+    { title: '운명의 길', src: 'part4/운명의 길.mp3', hint: '' },
+    { title: '울지 마라', src: 'part4/울지 마라.mp3', hint: '' },
+    { title: '원망을 하지 말고', src: 'part4/원망을 하지 말고.mp3', hint: '' },
+    { title: '원하는 것 받으려면', src: 'part4/원하는 것 받으려면.mp3', hint: '' },
+    { title: '월명동, 정말로 멋있어', src: 'part4/월명동, 정말로 멋있어.mp3', hint: '' },
+    { title: '월명동', src: 'part4/월명동.mp3', hint: '' },
+    { title: '월명동에 달이 뜨거들랑', src: 'part4/월명동에 달이 뜨거들랑.mp3', hint: '' },
+    { title: '의심하지 말고 나를 따라와요', src: 'part4/의심하지 말고 나를 따라와요.mp3', hint: '' },
+    { title: '의인의 삶2', src: 'part4/의인의 삶2.mp3', hint: '' },
+    { title: '이 날을 얼마나 기다렸다고', src: 'part4/이 날을 얼마나 기다렸다고.mp3', hint: '' },
+    { title: '이 때라 네 믿음대로 되어라', src: 'part4/이 때라 네 믿음대로 되어라.mp3', hint: '' },
+    { title: '이것이 표적의 역사다', src: 'part4/이것이 표적의 역사다.mp3', hint: '' },
+    { title: '이도령이 춘향이 만나듯', src: 'part4/이도령이 춘향이 만나듯.mp3', hint: '' },
+    { title: '이렇게 우리는 살았단다 (feat.R Piano)', src: 'part4/이렇게 우리는 살았단다 (feat.R Piano).mp3', hint: '' },
+    { title: '이상세계가 시작되었다', src: 'part4/이상세계가 시작되었다.mp3', hint: '' },
+    { title: '이제는 앞질러 간다 (Hiphop ver.)', src: 'part4/이제는 앞질러 간다 (Hiphop ver.).mp3', hint: '' },
+    { title: '이제는 앞질러 간다', src: 'part4/이제는 앞질러 간다.mp3', hint: '' },
+    { title: '이제는 하나님 웃으신다', src: 'part4/이제는 하나님 웃으신다.mp3', hint: '' },
+    { title: '이제는 해야 한다', src: 'part4/이제는 해야 한다.mp3', hint: '' },
+    { title: '이제는 행해야 한다', src: 'part4/이제는 행해야 한다.mp3', hint: '' },
+    { title: '인생 백년 하루와 같은 삶이다', src: 'part4/인생 백년 하루와 같은 삶이다.mp3', hint: '' },
+    { title: '인생은 감각이야', src: 'part4/인생은 감각이야.mp3', hint: '' },
+    { title: '인생은 멋있게 사는거야 Ver.2', src: 'part4/인생은 멋있게 사는거야 Ver.2.mp3', hint: '' },
+    { title: '인생은 멋있게 사는거야', src: 'part4/인생은 멋있게 사는거야.mp3', hint: '' },
+    { title: '인생은 지금이 중하다', src: 'part4/인생은 지금이 중하다.mp3', hint: '' },
+    { title: '인생의 낙 Acoustic Ver.', src: 'part4/인생의 낙 Acoustic Ver..mp3', hint: '' },
+    { title: '인생의 낙', src: 'part4/인생의 낙.mp3', hint: '' },
+    { title: '인생의 목적', src: 'part4/인생의 목적.mp3', hint: '' },
+    { title: '인생이 늙기 전에', src: 'part4/인생이 늙기 전에.mp3', hint: '' },
+    { title: '인연 Ver.1', src: 'part4/인연 Ver.1.mp3', hint: '' },
+    { title: '인연 Ver.2', src: 'part4/인연 Ver.2.mp3', hint: '' },
+    { title: '인연 Ver3. (Bossanova Ver.)', src: 'part4/인연 Ver3. (Bossanova Ver.).mp3', hint: '' },
+    { title: '일생일작', src: 'part4/일생일작.mp3', hint: '' },
+    { title: '잊지 말아라', src: 'part4/잊지 말아라.mp3', hint: '' },
+    { title: '자연성전의 깊은 비밀', src: 'part4/자연성전의 깊은 비밀.mp3', hint: '' },
+    { title: '재미있게 멋있게 만들기다 꾸미기다', src: 'part4/재미있게 멋있게 만들기다 꾸미기다.mp3', hint: '' },
+    { title: '저 솔은 아름답다', src: 'part4/저 솔은 아름답다.mp3', hint: '' },
+    { title: '저 영혼을 불러오라', src: 'part4/저 영혼을 불러오라.mp3', hint: '' },
+    { title: '절대 믿음', src: 'part4/절대 믿음.mp3', hint: '' },
+    { title: '젊은 날을 불태우며', src: 'part4/젊은 날을 불태우며.mp3', hint: '' },
+    { title: '정녕코 이루었다', src: 'part4/정녕코 이루었다.mp3', hint: '' },
+    { title: '정말로 좋아', src: 'part4/정말로 좋아.mp3', hint: '' },
+    { title: '정신 차려', src: 'part4/정신 차려.mp3', hint: '' },
+    { title: '제때 행하자', src: 'part4/제때 행하자.mp3', hint: '' },
+    { title: '좋아서 가는데', src: 'part4/좋아서 가는데.mp3', hint: '' },
+    { title: '좋아요', src: 'part4/좋아요.mp3', hint: '' },
+    { title: '주 맞은 사람들 기뻐하누나', src: 'part4/주 맞은 사람들 기뻐하누나.mp3', hint: '' },
+    { title: '주가 답이다', src: 'part4/주가 답이다.mp3', hint: '' },
+    { title: '주께 맡기어라', src: 'part4/주께 맡기어라.mp3', hint: '' },
+    { title: '주님 나신 곳에서', src: 'part4/주님 나신 곳에서.mp3', hint: '' },
+    { title: '주님 네게 오신다', src: 'part4/주님 네게 오신다.mp3', hint: '' },
+    { title: '주님 따라서 오르면서', src: 'part4/주님 따라서 오르면서.mp3', hint: '' },
+    { title: '주님 탄생하셨네', src: 'part4/주님 탄생하셨네.mp3', hint: '' },
+    { title: '주님 할 때 하지 못하면 못 해요', src: 'part4/주님 할 때 하지 못하면 못 해요.mp3', hint: '' },
+    { title: '주님과 동행하는 생활입니다', src: 'part4/주님과 동행하는 생활입니다.mp3', hint: '' },
+    { title: '주님께 맡겨버려라', src: 'part4/주님께 맡겨버려라.MP3', hint: '' },
+    { title: '주님만 믿습니다', src: 'part4/주님만 믿습니다.mp3', hint: '' },
+    { title: '주님밖에', src: 'part4/주님밖에.mp3', hint: '' },
+    { title: '주님은 나의 소망이요 기쁨', src: 'part4/주님은 나의 소망이요 기쁨.mp3', hint: '' },
+    { title: '주님은 내 곁에 (Rap ver.)', src: 'part4/주님은 내 곁에 (Rap ver.).mp3', hint: '' },
+    { title: '주님은 내 곁에', src: 'part4/주님은 내 곁에.mp3', hint: '' },
+    { title: '주님은 멋쟁이', src: 'part4/주님은 멋쟁이.mp3', hint: '' },
+    { title: '주님은 살아오셨네', src: 'part4/주님은 살아오셨네.mp3', hint: '' },
+    { title: '주님은 실천이야', src: 'part4/주님은 실천이야.mp3', hint: '' },
+    { title: '주님은 이기고 이기신다', src: 'part4/주님은 이기고 이기신다.mp3', hint: '' },
+    { title: '주님은 표적이야 기적이야', src: 'part4/주님은 표적이야 기적이야.mp3', hint: '' },
+    { title: '주님을 사랑해서 이겨왔노라', src: 'part4/주님을 사랑해서 이겨왔노라.mp3', hint: '' },
+    { title: '주님을 향한 사랑', src: 'part4/주님을 향한 사랑.mp3', hint: '' },
+    { title: '주님이 다스리신다', src: 'part4/주님이 다스리신다.mp3', hint: '' },
+    { title: '주신 것 가치 알고', src: 'part4/주신 것 가치 알고.mp3', hint: '' },
+    { title: '주와 함께 해야 한다', src: 'part4/주와 함께 해야 한다.mp3', hint: '' },
+    { title: '증거하였다', src: 'part4/증거하였다.mp3', hint: '' },
+    { title: '지금, 지금이 중한 때다', src: 'part4/지금, 지금이 중한 때다.mp3', hint: '' },
+    { title: '지금이 중하다2', src: 'part4/지금이 중하다2.mp3', hint: '' },
+    { title: '지난날 추억하며', src: 'part4/지난날 추억하며.mp3', hint: '' },
+    { title: '지혜와 명철로 해결합니다', src: 'part4/지혜와 명철로 해결합니다.mp3', hint: '' },
+    { title: '지혜와 명철을 가르쳐 주마', src: 'part4/지혜와 명철을 가르쳐 주마.mp3', hint: '' },
+    { title: '지혜와 명철의 성령님', src: 'part4/지혜와 명철의 성령님.mp3', hint: '' },
+    { title: '지혜의 여인을 찾으러 가자', src: 'part4/지혜의 여인을 찾으러 가자.mp3', hint: '' },
+    { title: '짝짝 짝짝쿵', src: 'part4/짝짝 짝짝쿵.mp3', hint: '' },
+    { title: '짠짠짠', src: 'part4/짠짠짠.mp3', hint: '' },
+    { title: '차원을 높여 보라', src: 'part4/차원을 높여 보라.mp3', hint: '' },
+    { title: '찬란한 달', src: 'part4/찬란한 달.mp3', hint: '' },
+    { title: '찬란한 하나님 모습', src: 'part4/찬란한 하나님 모습.mp3', hint: '' },
+        // --- Part 5 ---
+  { title: "추부 IC", src: "part5/추부 IC.mp3" },
+  { title: "큰 사람", src: "part5/큰 사람.mp3" },
+  { title: "평화와 영광", src: "part5/평화와 영광.mp3" },
+  { title: "푸른 하늘 별처럼", src: "part5/푸른 하늘 별처럼.mp3" },
+  { title: "하나님 궁, 계절마다 아름답다", src: "part5/하나님 궁, 계절마다 아름답다.mp3" },
+  { title: "하나님 궁전", src: "part5/하나님 궁전.mp3" },
+  { title: "하나님 뜻을 향해 가는 사람", src: "part5/하나님 뜻을 향해 가는 사람.mp3" },
+  { title: "하나님 마음에 드는 삶", src: "part5/하나님 마음에 드는 삶.mp3" },
+  { title: "하나님 말씀대로 살았네", src: "part5/하나님 말씀대로 살았네.mp3" },
+  { title: "하나님 몸이 되어서", src: "part5/하나님 몸이 되어서.mp3" },
+  { title: "하나님의 약속", src: "part5/하나님의 약속.mp3" },
+  { title: "하늘의 능력을 날마다 보며", src: "part5/하늘의 능력을 날마다 보며.mp3" },
+  { title: "하면 되는 거야", src: "part5/하면 되는 거야.mp3" },
+  { title: "한 알의 밀알로", src: "part5/한 알의 밀알로.mp3" },
+  { title: "할 때 해야 된다", src: "part5/할 때 해야 된다.mp3" },
+  { title: "행하고 달려라", src: "part5/행하고 달려라.mp3" },
+  { title: "형통의 길", src: "part5/형통의 길.mp3" },
+  { title: "황금천국 삶", src: "part5/황금천국 삶.mp3" },
+  { title: "휴거는 사랑이다", src: "part5/휴거는 사랑이다.mp3" },
+];
+
 
         /* ==========================================
-           2. Firebase 초기화
+           2. Firebase 설정
         ========================================== */
         const firebaseConfig = {
             apiKey: "AIzaSyBCGLZrV-Tkm66ZjA36WtHCC5RPcglp3iE",
@@ -604,348 +582,216 @@
             messagingSenderId: "31876563990",
             appId: "1:31876563990:web:ff5b3faf9cdb75a3b96137"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         /* ==========================================
-           3. 전역 상태 변수 및 요소 제어
+           3. 전역 변수 및 게임 상태
         ========================================== */
-        let gamePlaylist = [];
-        let currentIndex = 0;
+        let audio = new Audio();
+        let shuffledPlaylist = [];
+        let currentSongIndex = 0;
         let score = 0;
         let timerInterval = null;
         let timeLeft = 0;
         let isUnlimited = false;
-        let gameAudio = new Audio();
-        let currentMode = 'normal';
-        let isPaused = false;
 
-        // UI 요소
-        const startScreen = document.getElementById('startScreen');
-        const gameScreen = document.getElementById('gameScreen');
-        const resultsScreen = document.getElementById('resultsScreen');
-        const studyScreen = document.getElementById('study-screen');
-        const rankScreen = document.getElementById('rankScreen');
-
-        const startBtn = document.getElementById('startBtn');
-        const modeSelect = document.getElementById('modeSelect');
-        const timeSelect = document.getElementById('timeSelect');
-        const timerElem = document.getElementById('timer');
-        const scoreElem = document.getElementById('score');
-        const toastMessage = document.getElementById('toastMessage');
-
-        const answerInput = document.getElementById('answerInput');
-        const submitBtn = document.getElementById('submitBtn');
-        const hintBtn = document.getElementById('hintBtn');
-        const hintBox = document.getElementById('hintBox');
-
-        const pauseBtn = document.getElementById('pauseBtn');
-        const play30Btn = document.getElementById('play30Btn');
-        const btnMiddleListen = document.getElementById('btn-middle-listen');
-        const volumeSlider = document.getElementById('volumeSlider');
-
-        const exitGameBtn = document.getElementById('exitGameBtn');
-        const stopUnlimitedBtn = document.getElementById('stopUnlimitedBtn');
-        const restartBtn = document.getElementById('restartBtn');
-        const backToStartBtn = document.getElementById('backToStartBtn');
-
-        const viewRankBtn = document.getElementById('viewRankBtn');
-        const rankList = document.getElementById('rankList');
-        const rankBackBtn = document.getElementById('rankBackBtn');
-
-        /* 화면 전환 함수 */
+        /* ==========================================
+           4. 화면 전환 및 유틸 함수
+        ========================================== */
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
         }
 
-        /* 띄어쓰기 및 특수문자 공백 제거 정규화 */
-        function normalizeString(str) {
-            return str.replace(/[\s,.~!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/g, '').toLowerCase();
-        }
-
-        /* 한글 초성 추출 함수 */
-        function getChoseong(str) {
-            const choseongList = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-            let result = '';
-            for (let i = 0; i < str.length; i++) {
-                const code = str.charCodeAt(i);
-                if (code >= 44032 && code <= 55203) {
-                    const idx = Math.floor((code - 44032) / 588);
-                    result += choseongList[idx];
-                } else {
-                    result += str[i];
-                }
-            }
-            return result;
-        }
-
-        /* 메시지 출력 함수 */
-        function showToast(msg) {
-            toastMessage.textContent = msg;
+        function showToast(message) {
+            const toast = document.getElementById('toastMessage');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            toast.style.opacity = '1';
+            
             setTimeout(() => {
-                if (toastMessage.textContent === msg) toastMessage.textContent = '';
-            }, 2000);
+                let fadeEffect = setInterval(() => {
+                    if (!toast.style.opacity) {
+                        toast.style.opacity = 1;
+                    }
+                    if (toast.style.opacity > 0) {
+                        toast.style.opacity -= 0.1;
+                    } else {
+                        clearInterval(fadeEffect);
+                        toast.style.display = 'none';
+                    }
+                }, 50);
+            }, 1500);
         }
 
         /* ==========================================
-           4. 게임 시작 및 실행 로직
+           5. 메인 게임 로직
         ========================================== */
-        startBtn.addEventListener('click', startGame);
-
-        function startGame() {
-            // 초기화
+        // 게임 시작
+        document.getElementById('startBtn').addEventListener('click', () => {
+            const timeValue = document.getElementById('timeSelect').value;
+            isUnlimited = (timeValue === 'unlimited');
+            timeLeft = isUnlimited ? 0 : parseInt(timeValue);
+            
             score = 0;
-            currentIndex = 0;
-            scoreElem.textContent = score;
-            hintBox.textContent = '';
-            answerInput.value = '';
-            isPaused = false;
-            pauseBtn.textContent = '⏸️ 일시정지';
-
-            // 모드 및 시간 설정
-            currentMode = modeSelect.value;
-            const timeValue = timeSelect.value;
-
-            if (timeValue === 'unlimited') {
-                isUnlimited = true;
-                timerElem.textContent = '무제한';
-                stopUnlimitedBtn.style.display = 'block';
+            currentSongIndex = 0;
+            document.getElementById('score').textContent = score;
+            document.getElementById('hintBox').textContent = '';
+            document.getElementById('answerInput').value = '';
+            
+            if (isUnlimited) {
+                document.getElementById('timer').textContent = '무제한';
+                document.getElementById('stopUnlimitedBtn').style.display = 'block';
             } else {
-                isUnlimited = false;
-                timeLeft = parseInt(timeValue);
-                timerElem.textContent = timeLeft;
-                stopUnlimitedBtn.style.display = 'none';
-                startTimer();
+                document.getElementById('timer').textContent = timeLeft;
+                document.getElementById('stopUnlimitedBtn').style.display = 'none';
             }
 
-            // 플레이리스트 랜덤 셔플
-            gamePlaylist = [...playlist].sort(() => Math.random() - 0.5);
+            // 플레이리스트 무작위 섞기
+            shuffledPlaylist = [...playlist].sort(() => Math.random() - 0.5);
 
             showScreen('gameScreen');
-            loadSong(currentIndex);
-        }
+            playNextSong();
 
-        function startTimer() {
+            // 타이머 시작
             clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                if (isPaused) return;
-                timeLeft--;
-                timerElem.textContent = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    endGame();
-                }
-            }, 1000);
-        }
+            if (!isUnlimited) {
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    document.getElementById('timer').textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        endGame();
+                    }
+                }, 1000);
+            }
+        });
 
-        /* 음원 로드 및 재생 */
-        function loadSong(index) {
-            if (index >= gamePlaylist.length) {
-                showToast("모든 문제를 다 맞추셨습니다!");
+        // 다음 곡 재생
+        function playNextSong() {
+            if (currentSongIndex >= shuffledPlaylist.length) {
+                showToast("모든 곡을 다 맞추셨습니다!");
                 endGame();
                 return;
             }
 
-            const song = gamePlaylist[index];
-            gameAudio.pause();
-            gameAudio = new Audio(song.src);
-            gameAudio.volume = parseFloat(volumeSlider.value);
+            const mode = document.getElementById('modeSelect').value;
+            const currentSong = shuffledPlaylist[currentSongIndex];
+            
+            audio.src = currentSong.src;
+            document.getElementById('hintBox').textContent = ''; // 힌트 초기화
+            document.getElementById('pauseBtn').textContent = '⏸️ 일시정지';
 
-            // 재생 준비 후 시작 위치 설정
-            gameAudio.onloadedmetadata = () => {
-                if (currentMode === 'special' && gameAudio.duration) {
-                    // Special 모드: 곡 중간 위치 (20% ~ 60% 사이 구간에서 시작)
-                    const randomStart = gameAudio.duration * (0.2 + Math.random() * 0.4);
-                    gameAudio.currentTime = randomStart;
+            audio.addEventListener('loadedmetadata', function onLoaded() {
+                if (mode === 'special') {
+                    // Special 모드: 노래 길이의 30% 지점부터 시작
+                    audio.currentTime = audio.duration * 0.3;
                 }
-                gameAudio.play().catch(e => console.log("자동 재생 정책 제한:", e));
-            };
-
-            hintBox.textContent = '';
-            answerInput.value = '';
-            answerInput.focus();
+                audio.play().catch(e => console.log("자동 재생이 차단되었을 수 있습니다.", e));
+                audio.removeEventListener('loadedmetadata', onLoaded);
+            });
         }
 
-        /* ==========================================
-           5. 정답 제출 및 패스 처리
-        ========================================== */
-        submitBtn.addEventListener('click', checkAnswer);
-        answerInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') checkAnswer();
-        });
-
+        // 정답 확인
         function checkAnswer() {
-            const userAns = normalizeString(answerInput.value);
-            const currentSong = gamePlaylist[currentIndex];
-            const realAns = normalizeString(currentSong.title);
+            const answerInput = document.getElementById('answerInput');
+            // 공백 제거 및 소문자 변환 후 비교
+            const userAnswer = answerInput.value.replace(/\s/g, '').toLowerCase();
+            const correctAnswer = shuffledPlaylist[currentSongIndex].title.replace(/\s/g, '').toLowerCase();
 
-            // 빈 칸 입력이면 패스
-            if (userAns === '') {
-                showToast(`⏭️ 패스! 정답: ${currentSong.title}`);
-                nextSong();
+            if (userAnswer === '') {
+                // 입력 없이 누르면 패스
+                showToast("패스! 다음 곡으로 넘어갑니다.");
+                currentSongIndex++;
+                playNextSong();
                 return;
             }
 
-            if (userAns === realAns) {
+            if (userAnswer === correctAnswer) {
                 score++;
-                scoreElem.textContent = score;
-                showToast(`⭕ 정답입니다! (${currentSong.title})`);
-                nextSong();
+                document.getElementById('score').textContent = score;
+                showToast("정답입니다! 🎉");
+                answerInput.value = '';
+                currentSongIndex++;
+                playNextSong();
             } else {
-                showToast("❌ 오답입니다. 다시 시도해 보세요!");
+                showToast("틀렸습니다. 다시 시도해보세요!");
                 answerInput.value = '';
             }
         }
 
-        function nextSong() {
-            currentIndex++;
-            loadSong(currentIndex);
-        }
-
-        /* ==========================================
-           6. 음원 컨트롤 기능
-        ========================================== */
-        // 볼륨 조절
-        volumeSlider.addEventListener('input', (e) => {
-            gameAudio.volume = parseFloat(e.target.value);
+        document.getElementById('submitBtn').addEventListener('click', checkAnswer);
+        document.getElementById('answerInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkAnswer();
         });
 
-        // 일시정지 / 재개
-        pauseBtn.addEventListener('click', () => {
-            if (gameAudio.paused) {
-                gameAudio.play();
-                isPaused = false;
-                pauseBtn.textContent = '⏸️ 일시정지';
+        // 게임 종료
+        function endGame() {
+            clearInterval(timerInterval);
+            audio.pause();
+            document.getElementById('finalScore').textContent = `최종 점수: ${score}점`;
+            showScreen('resultsScreen');
+        }
+
+        // 버튼 이벤트 리스너들
+        document.getElementById('exitGameBtn').addEventListener('click', () => {
+            if(confirm("게임을 정말 종료하시겠습니까?")) endGame();
+        });
+        document.getElementById('stopUnlimitedBtn').addEventListener('click', endGame);
+        document.getElementById('backToStartBtn').addEventListener('click', () => showScreen('startScreen'));
+        document.getElementById('restartBtn').addEventListener('click', () => document.getElementById('startBtn').click());
+
+        // 컨트롤 박스
+        document.getElementById('volumeSlider').addEventListener('input', (e) => {
+            audio.volume = e.target.value;
+        });
+
+        document.getElementById('pauseBtn').addEventListener('click', (e) => {
+            if (audio.paused) {
+                audio.play();
+                e.target.textContent = '⏸️ 일시정지';
             } else {
-                gameAudio.pause();
-                isPaused = true;
-                pauseBtn.textContent = '▶️ 재개';
+                audio.pause();
+                e.target.textContent = '▶️ 재생';
             }
         });
 
-        // 30초 재생
-        play30Btn.addEventListener('click', () => {
-            if (!gameAudio.src) return;
-            gameAudio.currentTime = 0;
-            gameAudio.play();
-            setTimeout(() => {
-                if (!gameAudio.paused) gameAudio.pause();
-            }, 30000);
+        document.getElementById('play30Btn').addEventListener('click', () => {
+            audio.currentTime = 0; // 처음으로
+            audio.play();
+            setTimeout(() => { audio.pause(); }, 30000);
         });
 
-        // 중간 10초 듣기
-        btnMiddleListen.addEventListener('click', () => {
-            if (!gameAudio.src) return;
-            const duration = gameAudio.duration;
+        document.getElementById('btn-middle-listen').addEventListener('click', () => {
+            if (!audio.src) return;
+            const duration = audio.duration;
             if (isNaN(duration)) {
-                alert("음원을 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
+                alert("노래 정보를 불러오는 중입니다. 잠시만 기다려주세요!");
                 return;
             }
-            gameAudio.currentTime = duration / 2;
-            gameAudio.play();
-            setTimeout(() => {
-                if (!gameAudio.paused) gameAudio.pause();
-            }, 10000);
+            audio.currentTime = duration / 2;
+            audio.play();
+            setTimeout(() => { audio.pause(); }, 10000);
         });
 
-        // 초성 힌트 보기
-        hintBtn.addEventListener('click', () => {
-            if (gamePlaylist[currentIndex]) {
-                const hint = getChoseong(gamePlaylist[currentIndex].title);
-                hintBox.textContent = `💡 힌트 (초성): ${hint}`;
-            }
-        });
-
-        // 나가기 및 게임 중단
-        exitGameBtn.addEventListener('click', () => {
-            if (confirm("게임을 종료하고 메인 화면으로 돌아가시겠습니까?")) {
-                stopGame();
-                showScreen('startScreen');
-            }
-        });
-
-        stopUnlimitedBtn.addEventListener('click', endGame);
-
-        function stopGame() {
-            clearInterval(timerInterval);
-            if (gameAudio) {
-                gameAudio.pause();
-                gameAudio.currentTime = 0;
-            }
-        }
-
-        /* ==========================================
-           7. 게임 종료 및 순위 등록 (Firebase 연동)
-        ========================================== */
-        function endGame() {
-            stopGame();
-            document.getElementById('finalScore').textContent = `최종 점수: ${score}개 정답!`;
-            showScreen('resultsScreen');
-
-            setTimeout(() => {
-                const userName = prompt("게임이 종료되었습니다! 랭킹에 등록할 닉네임을 입력해 주세요:", "익명");
-                if (userName && userName.trim() !== "") {
-                    saveScore(userName.trim(), score);
+        // 초성 힌트 로직
+        document.getElementById('hintBtn').addEventListener('click', () => {
+            const title = shuffledPlaylist[currentSongIndex].title;
+            const cho = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+            let hint = "";
+            for (let i = 0; i < title.length; i++) {
+                const code = title.charCodeAt(i) - 44032;
+                if (code > -1 && code < 11172) {
+                    hint += cho[Math.floor(code / 588)];
+                } else {
+                    hint += title.charAt(i); // 숫자나 영어, 띄어쓰기는 그대로 출력
                 }
-            }, 300);
-        }
-
-        function saveScore(name, finalScore) {
-            db.ref('rankings').push({
-                name: name,
-                score: finalScore,
-                mode: currentMode,
-                date: new Date().toLocaleDateString('ko-KR')
-            }).then(() => {
-                alert("순위가 성공적으로 등록되었습니다!");
-            }).catch(err => {
-                console.error("랭킹 저장 오류:", err);
-            });
-        }
-
-        restartBtn.addEventListener('click', startGame);
-        backToStartBtn.addEventListener('click', () => showScreen('startScreen'));
-
-        /* ==========================================
-           8. 🏆 명예의 전당 (랭킹 조회)
-        ========================================== */
-        viewRankBtn.addEventListener('click', () => {
-            showScreen('rankScreen');
-            loadRankings();
+            }
+            document.getElementById('hintBox').textContent = "💡 " + hint;
         });
 
-        rankBackBtn.addEventListener('click', () => showScreen('startScreen'));
-
-        function loadRankings() {
-            rankList.innerHTML = '<li>순위를 불러오는 중...</li>';
-            db.ref('rankings').orderByChild('score').limitToLast(20).once('value', (snapshot) => {
-                rankList.innerHTML = '';
-                const ranks = [];
-                snapshot.forEach(child => {
-                    ranks.push(child.val());
-                });
-                ranks.reverse(); // 내림차순 정렬
-
-                if (ranks.length === 0) {
-                    rankList.innerHTML = '<li>등록된 랭킹 정보가 없습니다.</li>';
-                    return;
-                }
-
-                ranks.forEach((item, idx) => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <span><strong>${idx + 1}위</strong> ${item.name}</span>
-                        <span>${item.score}점 (${item.mode === 'special' ? 'Special' : '일반'})</span>
-                    `;
-                    rankList.appendChild(li);
-                });
-            });
-        }
-
         /* ==========================================
-           9. 📚 공부하기 방 기능 (비밀번호: 0316)
+           6. 📚 공부하기 방 기능
         ========================================== */
         const btnStudy = document.getElementById('btn-study');
         const btnStudyBack = document.getElementById('btn-study-back');
@@ -958,9 +804,7 @@
             const password = prompt("공부하기 방에 입장하려면 비밀번호를 입력하세요:");
             if (password === "0316") {
                 showScreen('study-screen');
-                if (studyPlaylistUl.innerHTML === '') {
-                    renderStudyPlaylist();
-                }
+                if (studyPlaylistUl.innerHTML === '') renderStudyPlaylist();
             } else if (password !== null) {
                 alert("비밀번호가 틀렸습니다.");
             }
