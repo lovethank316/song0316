@@ -57,6 +57,59 @@
             box-sizing: border-box;
         }
 
+        /* ✨ 새로 적용된 남은 시간 & 맞춘 개수 디자인 ✨ */
+        .status-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 20px 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 14px;
+            color: #64748b;
+            font-weight: bold;
+        }
+        .status-value {
+            font-size: 24px;
+            color: var(--primary);
+            margin-top: 4px;
+        }
+
+        /* ✨ 새로 적용된 정답 입력창 디자인 ✨ */
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            align-items: stretch;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-area input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+        .input-area button {
+            width: auto;
+            margin: 0;
+            padding: 0 24px;
+            font-size: 16px;
+        }
+
         /* 📚 공부하기 방 플레이리스트 스타일 */
         .study-list {
             max-height: 300px;
@@ -76,15 +129,10 @@
             font-size: 14px;
             transition: background-color 0.2s;
         }
-        .study-list li:last-child { border-bottom: none; }
         .study-list li:hover { background-color: #e0e7ff; }
-        .study-list li.playing {
-            background-color: #c7d2fe;
-            font-weight: bold;
-            color: #3730a3;
-        }
+        .study-list li.playing { background-color: #c7d2fe; font-weight: bold; color: #3730a3; }
 
-        /* 알림(Toast) 메시지 스타일 추가 */
+        /* 토스트 알림 */
         .toast {
             display: none;
             position: fixed;
@@ -98,8 +146,29 @@
             z-index: 1000;
             text-align: center;
         }
+
+        /* 랭킹 리스트 스타일 */
+        .rank-list {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            background: #f9fafb;
+            margin-bottom: 5px;
+            border-radius: 6px;
+        }
+        .rank-item:nth-child(1) { background: #fef08a; font-weight: bold; } /* 1등 금색 */
+        .rank-item:nth-child(2) { background: #e2e8f0; font-weight: bold; } /* 2등 은색 */
+        .rank-item:nth-child(3) { background: #fed7aa; font-weight: bold; } /* 3등 동색 */
     </style>
-    <!-- Firebase SDK (반드시 필요합니다) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
@@ -142,9 +211,16 @@
             
             <div id="toastMessage" class="toast"></div>
 
-            <div class="status-box" style="display: flex; justify-content: space-around; margin: 15px 0;">
-                <div>남은 시간: <span id="timer">0</span></div>
-                <div>맞춘 개수: <span id="score">0</span></div>
+            <!-- 변경된 상태창 디자인 -->
+            <div class="status-box">
+                <div class="status-item">
+                    남은 시간
+                    <span id="timer" class="status-value">0</span>
+                </div>
+                <div class="status-item">
+                    맞춘 개수
+                    <span id="score" class="status-value">0</span>
+                </div>
             </div>
 
             <div class="volume-control" style="margin-bottom: 15px;">
@@ -163,43 +239,70 @@
             <button id="hintBtn" class="btn btn-sub">💡 초성 힌트 보기</button>
             <div id="hintBox" style="margin: 10px 0; font-weight: bold; color: #4f46e5; text-align: center;"></div>
 
-            <div class="input-area" style="margin-top: 15px;">
-                <input type="text" id="answerInput" placeholder="입력 없이 확인을 누르면 패스됩니다." autocomplete="off">
-                <button id="submitBtn" class="btn btn-main" style="margin-top: 8px;">확인</button>
+            <!-- 변경된 입력창 디자인 -->
+            <div class="input-area">
+                <input type="text" id="answerInput" placeholder="정답을 입력하세요" autocomplete="off">
+                <button id="submitBtn" class="btn btn-main">확인</button>
             </div>
             <div style="font-size: 12px; color: #888; margin-top: 5px;">* 띄어쓰기는 틀려도 글자만 맞으면 정답 처리됩니다.</div>
+            <div style="font-size: 12px; color: #ef4444; margin-top: 5px;">* 빈칸 상태에서 빠르게 엔터를 두 번 연타하면 패스됩니다.</div>
         </div>
 
-        <!-- 3. 결과 화면 -->
+        <!-- 3. 결과 및 랭킹 등록 화면 (복구됨) -->
         <div id="resultsScreen" class="screen">
             <h2 style="text-align: center;">🎉 게임 종료!</h2>
             <div id="finalScore" style="text-align: center; font-size: 24px; font-weight: bold; color: #4f46e5; margin: 20px 0;"></div>
-            <button id="restartBtn" class="btn btn-main">다시 하기</button>
-            <button id="backToStartBtn" class="btn btn-sub">메인 메뉴로</button>
+            
+            <div class="form-group" style="background: #f8fafc; padding: 15px; border-radius: 8px;">
+                <label>🏆 명예의 전당 등록</label>
+                <input type="text" id="playerName" placeholder="이름을 입력하세요 (예: 섭리인)" maxlength="10">
+                <button id="saveScoreBtn" class="btn btn-main" style="margin-top: 10px;">점수 등록하기</button>
+            </div>
+
+            <button id="restartBtn" class="btn btn-sub">다시 하기 (등록 안함)</button>
+            <button id="backToStartBtn" class="btn btn-secondary">메인 메뉴로</button>
         </div>
 
-        <!-- 4. 📚 공부하기 방 화면 -->
+        <!-- 4. 명예의 전당 (랭킹) 화면 (복구됨) -->
+        <div id="rankScreen" class="screen">
+            <h2 style="text-align: center;">🏆 명예의 전당</h2>
+            
+            <div class="form-group">
+                <label for="rankTimeSelect">조회할 시간대 선택</label>
+                <select id="rankTimeSelect">
+                    <option value="60">1분 모드</option>
+                    <option value="180">3분 모드</option>
+                    <option value="300">5분 모드</option>
+                    <option value="600">10분 모드</option>
+                    <option value="unlimited">무제한 모드</option>
+                </select>
+            </div>
+
+            <ul id="rankList" class="rank-list">
+                <!-- 랭킹 데이터가 여기에 표시됩니다 -->
+            </ul>
+
+            <button id="closeRankBtn" class="btn btn-secondary">메인 메뉴로 돌아가기</button>
+        </div>
+
+        <!-- 5. 📚 공부하기 방 화면 -->
         <div id="study-screen" class="screen">
             <h2 style="text-align: center;">📚 공부하기</h2>
             <p style="color: #666; text-align: center; font-size: 14px;">모든 명곡을 연속해서 들을 수 있습니다.</p>
-            
             <div style="margin: 15px 0;">
                 <div id="study-current-song" style="font-weight: bold; margin-bottom: 8px; color: #4f46e5; text-align: center;">재생 중인 곡이 없습니다.</div>
                 <audio id="study-audio" controls style="width: 100%;"></audio>
             </div>
-
             <ul id="study-playlist" class="study-list"></ul>
-
             <button id="btn-study-back" class="btn btn-secondary">메인 메뉴로 돌아가기</button>
         </div>
     </div>
 
-    <!-- 스크립트 영역 -->
     <script>
         /* ==========================================
-           1. 노래 목록
+           1. 노래 목록 (기존에 작성하신 playlist 배열을 여기에 넣어주세요)
         ========================================== */
-              const playlist = [
+        const playlist = [
         // --- Part 1 ---
   { title: "My Way remix", src: "part1/My Way remix.mp3" },
   { title: "My way", src: "part1/My way.mp3" },
@@ -476,7 +579,7 @@
     { title: '이 때라 네 믿음대로 되어라', src: 'part4/이 때라 네 믿음대로 되어라.mp3', hint: '' },
     { title: '이것이 표적의 역사다', src: 'part4/이것이 표적의 역사다.mp3', hint: '' },
     { title: '이도령이 춘향이 만나듯', src: 'part4/이도령이 춘향이 만나듯.mp3', hint: '' },
-    { title: '이렇게 우리는 살았단다 (feat.R Piano)', src: 'part4/이렇게 우리는 살았단다 (feat.R Piano).mp3', hint: '' },
+    { title: '이렇게 우리는 살았단다', src: 'part4/이렇게 우리는 살았단다.mp3', hint: '' },
     { title: '이상세계가 시작되었다', src: 'part4/이상세계가 시작되었다.mp3', hint: '' },
     { title: '이제는 앞질러 간다 (Hiphop ver.)', src: 'part4/이제는 앞질러 간다 (Hiphop ver.).mp3', hint: '' },
     { title: '이제는 앞질러 간다', src: 'part4/이제는 앞질러 간다.mp3', hint: '' },
@@ -494,7 +597,7 @@
     { title: '인생이 늙기 전에', src: 'part4/인생이 늙기 전에.mp3', hint: '' },
     { title: '인연 Ver.1', src: 'part4/인연 Ver.1.mp3', hint: '' },
     { title: '인연 Ver.2', src: 'part4/인연 Ver.2.mp3', hint: '' },
-    { title: '인연 Ver3. (Bossanova Ver.)', src: 'part4/인연 Ver3. (Bossanova Ver.).mp3', hint: '' },
+    { title: '인연 Ver3. ', src: 'part4/인연 Ver3. .mp3', hint: '' },
     { title: '일생일작', src: 'part4/일생일작.mp3', hint: '' },
     { title: '잊지 말아라', src: 'part4/잊지 말아라.mp3', hint: '' },
     { title: '자연성전의 깊은 비밀', src: 'part4/자연성전의 깊은 비밀.mp3', hint: '' },
@@ -569,7 +672,6 @@
   { title: "휴거는 사랑이다", src: "part5/휴거는 사랑이다.mp3" },
 ];
 
-
         /* ==========================================
            2. Firebase 설정
         ========================================== */
@@ -586,15 +688,23 @@
         const db = firebase.database();
 
         /* ==========================================
-           3. 전역 변수 및 게임 상태
+           3. 전역 변수 및 게임 상태, 효과음 셋팅
         ========================================== */
         let audio = new Audio();
+        
+        // 정답/오답 효과음 설정
+        const correctSfx = new Audio('correct.mp3');
+        const wrongSfx = new Audio('wrong.mp3');
+
         let shuffledPlaylist = [];
         let currentSongIndex = 0;
         let score = 0;
         let timerInterval = null;
         let timeLeft = 0;
         let isUnlimited = false;
+        let currentTimeMode = "60"; // 게임 끝난 후 랭킹 등록 시 사용할 모드 기록
+
+        let lastEmptySubmitTime = 0; // 더블 탭(연타) 패스를 위한 시간 변수
 
         /* ==========================================
            4. 화면 전환 및 유틸 함수
@@ -612,9 +722,7 @@
             
             setTimeout(() => {
                 let fadeEffect = setInterval(() => {
-                    if (!toast.style.opacity) {
-                        toast.style.opacity = 1;
-                    }
+                    if (!toast.style.opacity) { toast.style.opacity = 1; }
                     if (toast.style.opacity > 0) {
                         toast.style.opacity -= 0.1;
                     } else {
@@ -628,14 +736,15 @@
         /* ==========================================
            5. 메인 게임 로직
         ========================================== */
-        // 게임 시작
         document.getElementById('startBtn').addEventListener('click', () => {
             const timeValue = document.getElementById('timeSelect').value;
+            currentTimeMode = timeValue; 
             isUnlimited = (timeValue === 'unlimited');
             timeLeft = isUnlimited ? 0 : parseInt(timeValue);
             
             score = 0;
             currentSongIndex = 0;
+            lastEmptySubmitTime = 0;
             document.getElementById('score').textContent = score;
             document.getElementById('hintBox').textContent = '';
             document.getElementById('answerInput').value = '';
@@ -648,75 +757,80 @@
                 document.getElementById('stopUnlimitedBtn').style.display = 'none';
             }
 
-            // 플레이리스트 무작위 섞기
             shuffledPlaylist = [...playlist].sort(() => Math.random() - 0.5);
-
             showScreen('gameScreen');
             playNextSong();
 
-            // 타이머 시작
             clearInterval(timerInterval);
             if (!isUnlimited) {
                 timerInterval = setInterval(() => {
                     timeLeft--;
                     document.getElementById('timer').textContent = timeLeft;
-                    if (timeLeft <= 0) {
-                        endGame();
-                    }
+                    if (timeLeft <= 0) endGame();
                 }, 1000);
             }
         });
 
-        // 다음 곡 재생
         function playNextSong() {
             if (currentSongIndex >= shuffledPlaylist.length) {
                 showToast("모든 곡을 다 맞추셨습니다!");
                 endGame();
                 return;
             }
-
             const mode = document.getElementById('modeSelect').value;
-            const currentSong = shuffledPlaylist[currentSongIndex];
-            
-            audio.src = currentSong.src;
-            document.getElementById('hintBox').textContent = ''; // 힌트 초기화
+            audio.src = shuffledPlaylist[currentSongIndex].src;
+            document.getElementById('hintBox').textContent = ''; 
             document.getElementById('pauseBtn').textContent = '⏸️ 일시정지';
+            document.getElementById('answerInput').focus();
 
             audio.addEventListener('loadedmetadata', function onLoaded() {
-                if (mode === 'special') {
-                    // Special 모드: 노래 길이의 30% 지점부터 시작
-                    audio.currentTime = audio.duration * 0.3;
-                }
-                audio.play().catch(e => console.log("자동 재생이 차단되었을 수 있습니다.", e));
+                if (mode === 'special') audio.currentTime = audio.duration * 0.3;
+                audio.play().catch(e => console.log("재생 오류", e));
                 audio.removeEventListener('loadedmetadata', onLoaded);
             });
         }
 
-        // 정답 확인
+        // 정답 확인 로직 (2연타 패스 포함)
         function checkAnswer() {
             const answerInput = document.getElementById('answerInput');
-            // 공백 제거 및 소문자 변환 후 비교
             const userAnswer = answerInput.value.replace(/\s/g, '').toLowerCase();
             const correctAnswer = shuffledPlaylist[currentSongIndex].title.replace(/\s/g, '').toLowerCase();
 
+            // 빈칸일 경우 로직 (더블 탭 패스)
             if (userAnswer === '') {
-                // 입력 없이 누르면 패스
-                showToast("패스! 다음 곡으로 넘어갑니다.");
-                currentSongIndex++;
-                playNextSong();
+                const now = Date.now();
+                if (now - lastEmptySubmitTime < 500) { 
+                    // 0.5초(500ms) 안에 두 번 연타했을 때 패스 처리
+                    showToast("패스! 다음 곡으로 넘어갑니다.");
+                    currentSongIndex++;
+                    playNextSong();
+                    lastEmptySubmitTime = 0; // 초기화
+                } else {
+                    showToast("한 번 더 누르면 패스됩니다.");
+                    lastEmptySubmitTime = now;
+                }
                 return;
             }
 
+            // 답을 입력했을 경우
             if (userAnswer === correctAnswer) {
                 score++;
                 document.getElementById('score').textContent = score;
                 showToast("정답입니다! 🎉");
+                correctSfx.currentTime = 0;
+                correctSfx.play(); // 정답 효과음
+                
                 answerInput.value = '';
+                lastEmptySubmitTime = 0;
                 currentSongIndex++;
                 playNextSong();
             } else {
                 showToast("틀렸습니다. 다시 시도해보세요!");
-                answerInput.value = '';
+                wrongSfx.currentTime = 0;
+                wrongSfx.play(); // 오답 효과음
+                
+                answerInput.value = ''; // 오답 시 빈칸으로 만듦 -> 이 상태로 엔터 한번 더 누르면 위 로직에 의해 패스 대기상태가 됨
+                lastEmptySubmitTime = Date.now(); // 틀리자마자 바로 엔터치면 패스될 수 있게 세팅
             }
         }
 
@@ -725,73 +839,120 @@
             if (e.key === 'Enter') checkAnswer();
         });
 
-        // 게임 종료
         function endGame() {
             clearInterval(timerInterval);
             audio.pause();
             document.getElementById('finalScore').textContent = `최종 점수: ${score}점`;
+            document.getElementById('playerName').value = ''; // 이름 입력창 초기화
             showScreen('resultsScreen');
         }
 
-        // 버튼 이벤트 리스너들
-        document.getElementById('exitGameBtn').addEventListener('click', () => {
-            if(confirm("게임을 정말 종료하시겠습니까?")) endGame();
-        });
+        document.getElementById('exitGameBtn').addEventListener('click', () => { if(confirm("게임을 종료하시겠습니까?")) endGame(); });
         document.getElementById('stopUnlimitedBtn').addEventListener('click', endGame);
         document.getElementById('backToStartBtn').addEventListener('click', () => showScreen('startScreen'));
-        document.getElementById('restartBtn').addEventListener('click', () => document.getElementById('startBtn').click());
+        document.getElementById('restartBtn').addEventListener('click', () => showScreen('startScreen'));
 
-        // 컨트롤 박스
-        document.getElementById('volumeSlider').addEventListener('input', (e) => {
-            audio.volume = e.target.value;
-        });
-
+        // 버튼들
+        document.getElementById('volumeSlider').addEventListener('input', (e) => { audio.volume = e.target.value; });
         document.getElementById('pauseBtn').addEventListener('click', (e) => {
-            if (audio.paused) {
-                audio.play();
-                e.target.textContent = '⏸️ 일시정지';
-            } else {
-                audio.pause();
-                e.target.textContent = '▶️ 재생';
-            }
+            if (audio.paused) { audio.play(); e.target.textContent = '⏸️ 일시정지'; }
+            else { audio.pause(); e.target.textContent = '▶️ 재생'; }
         });
-
         document.getElementById('play30Btn').addEventListener('click', () => {
-            audio.currentTime = 0; // 처음으로
-            audio.play();
-            setTimeout(() => { audio.pause(); }, 30000);
+            audio.currentTime = 0; audio.play(); setTimeout(() => { audio.pause(); }, 30000);
         });
-
         document.getElementById('btn-middle-listen').addEventListener('click', () => {
             if (!audio.src) return;
-            const duration = audio.duration;
-            if (isNaN(duration)) {
-                alert("노래 정보를 불러오는 중입니다. 잠시만 기다려주세요!");
-                return;
-            }
-            audio.currentTime = duration / 2;
-            audio.play();
+            audio.currentTime = audio.duration / 2; audio.play();
             setTimeout(() => { audio.pause(); }, 10000);
         });
-
-        // 초성 힌트 로직
         document.getElementById('hintBtn').addEventListener('click', () => {
             const title = shuffledPlaylist[currentSongIndex].title;
             const cho = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
             let hint = "";
             for (let i = 0; i < title.length; i++) {
                 const code = title.charCodeAt(i) - 44032;
-                if (code > -1 && code < 11172) {
-                    hint += cho[Math.floor(code / 588)];
-                } else {
-                    hint += title.charAt(i); // 숫자나 영어, 띄어쓰기는 그대로 출력
-                }
+                if (code > -1 && code < 11172) hint += cho[Math.floor(code / 588)];
+                else hint += title.charAt(i);
             }
             document.getElementById('hintBox').textContent = "💡 " + hint;
         });
 
         /* ==========================================
-           6. 📚 공부하기 방 기능
+           6. 명예의 전당 (Firebase 저장 및 불러오기) 복구
+        ========================================== */
+        // 점수 저장
+        document.getElementById('saveScoreBtn').addEventListener('click', () => {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) {
+                alert("이름을 입력해주세요!");
+                return;
+            }
+            // 선택했던 시간대 폴더에 저장 (예: rankings/60, rankings/unlimited)
+            db.ref('rankings/' + currentTimeMode).push({
+                name: name,
+                score: score,
+                date: new Date().toISOString()
+            }).then(() => {
+                alert("등록되었습니다!");
+                showScreen('startScreen');
+            }).catch(error => {
+                alert("오류가 발생했습니다: " + error.message);
+            });
+        });
+
+        // 명예의 전당 보기
+        document.getElementById('viewRankBtn').addEventListener('click', () => {
+            showScreen('rankScreen');
+            loadRankings(); // 현재 선택된 select 박스의 기준으로 불러오기
+        });
+
+        document.getElementById('closeRankBtn').addEventListener('click', () => showScreen('startScreen'));
+
+        // select 박스 변경 시 랭킹 다시 불러오기
+        document.getElementById('rankTimeSelect').addEventListener('change', loadRankings);
+
+        function loadRankings() {
+            const timeLimit = document.getElementById('rankTimeSelect').value;
+            const rankListUl = document.getElementById('rankList');
+            rankListUl.innerHTML = '<li style="text-align:center;">데이터를 불러오는 중입니다...</li>';
+
+            db.ref('rankings/' + timeLimit).orderByChild('score').once('value', snapshot => {
+                rankListUl.innerHTML = ''; // 초기화
+                const rankings = [];
+                
+                snapshot.forEach(child => {
+                    rankings.push(child.val());
+                });
+
+                // 내림차순 정렬 (점수가 높은 순)
+                rankings.sort((a, b) => b.score - a.score);
+
+                if (rankings.length === 0) {
+                    rankListUl.innerHTML = '<li style="text-align:center;">아직 등록된 기록이 없습니다.</li>';
+                    return;
+                }
+
+                // 상위 50명만 표시
+                rankings.slice(0, 50).forEach((data, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'rank-item';
+                    
+                    // 날짜 포맷 (선택사항)
+                    const dateObj = new Date(data.date);
+                    const dateStr = `${dateObj.getMonth()+1}/${dateObj.getDate()}`;
+
+                    li.innerHTML = `
+                        <span><strong>${index + 1}위</strong>. ${data.name}</span>
+                        <span>${data.score}점 <small style="color:#888;">(${dateStr})</small></span>
+                    `;
+                    rankListUl.appendChild(li);
+                });
+            });
+        }
+
+        /* ==========================================
+           7. 📚 공부하기 방 기능
         ========================================== */
         const btnStudy = document.getElementById('btn-study');
         const btnStudyBack = document.getElementById('btn-study-back');
@@ -805,16 +966,9 @@
             if (password === "0316") {
                 showScreen('study-screen');
                 if (studyPlaylistUl.innerHTML === '') renderStudyPlaylist();
-            } else if (password !== null) {
-                alert("비밀번호가 틀렸습니다.");
-            }
+            } else if (password !== null) alert("비밀번호가 틀렸습니다.");
         });
-
-        btnStudyBack.addEventListener('click', () => {
-            studyAudio.pause();
-            showScreen('startScreen');
-        });
-
+        btnStudyBack.addEventListener('click', () => { studyAudio.pause(); showScreen('startScreen'); });
         function renderStudyPlaylist() {
             playlist.forEach((song, index) => {
                 const li = document.createElement('li');
@@ -823,19 +977,16 @@
                 studyPlaylistUl.appendChild(li);
             });
         }
-
         function playStudySong(index) {
             const song = playlist[index];
             studyAudio.src = song.src;
             studyAudio.play();
             studyCurrentSong.textContent = `▶ 재생 중: ${song.title}`;
             currentStudyIndex = index;
-
             const allLis = studyPlaylistUl.querySelectorAll('li');
             allLis.forEach(li => li.classList.remove('playing'));
             if (allLis[index]) allLis[index].classList.add('playing');
         }
-
         studyAudio.addEventListener('ended', () => {
             if (currentStudyIndex + 1 < playlist.length) {
                 playStudySong(currentStudyIndex + 1);
