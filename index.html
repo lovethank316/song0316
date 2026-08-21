@@ -14,6 +14,7 @@
             --text-sub: #64748b;
             --success: #10b981;
             --warning: #f59e0b;
+            --danger: #ef4444;
         }
 
         * {
@@ -60,13 +61,8 @@
             gap: 8px;
         }
 
-        .screen {
-            display: none;
-        }
-
-        .screen.active {
-            display: block;
-        }
+        .screen { display: none; }
+        .screen.active { display: block; }
 
         /* 시작 화면 */
         .start-group {
@@ -111,6 +107,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            flex: 1;
         }
 
         .status-item .label {
@@ -159,11 +156,12 @@
             color: #92400e;
             padding: 12px;
             border-radius: 12px;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 600;
             text-align: center;
             margin-bottom: 16px;
             display: none;
+            letter-spacing: 2px;
         }
 
         .input-group {
@@ -182,9 +180,7 @@
             transition: border-color 0.2s;
         }
 
-        input[type="text"]:focus {
-            border-color: var(--primary);
-        }
+        input[type="text"]:focus { border-color: var(--primary); }
 
         .notice {
             font-size: 12px;
@@ -192,8 +188,28 @@
             text-align: center;
         }
 
-        /* 결과 화면 */
-        .result-card {
+        /* 토스트 알림창 */
+        .toast {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(15, 23, 42, 0.9);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+            z-index: 100;
+            display: none;
+            width: 80%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            word-break: keep-all;
+        }
+
+        /* 결과 & 랭킹 화면 */
+        .result-card, .rank-card {
             text-align: center;
             padding: 20px 0;
         }
@@ -204,29 +220,32 @@
             margin-bottom: 16px;
         }
 
-        .tier-badge {
-            font-size: 22px;
-            font-weight: 700;
-            padding: 8px 16px;
-            background: #f1f5f9;
-            border-radius: 50px;
-            display: inline-block;
-            margin: 12px 0;
-            color: var(--primary);
-        }
-
         .score-display {
             font-size: 40px;
             font-weight: 800;
             color: var(--primary);
-            margin-bottom: 8px;
-        }
-
-        .result-ment {
-            color: var(--text-sub);
-            font-size: 15px;
             margin-bottom: 24px;
         }
+
+        .rank-list {
+            list-style: none;
+            margin: 20px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .rank-list li {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+        .rank-list li:last-child { border-bottom: none; }
 
         /* 공통 버튼 */
         .btn {
@@ -245,18 +264,24 @@
             gap: 6px;
         }
 
-        .btn:hover {
-            background: var(--primary-hover);
-            transform: translateY(-1px);
-        }
-
+        .btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
         .btn-full { width: 100%; padding: 16px; font-size: 16px; }
         .btn-sub { background: #e2e8f0; color: var(--text-main); }
         .btn-sub:hover { background: #cbd5e1; }
         .btn-warning { background: var(--warning); color: white; }
         .btn-warning:hover { filter: brightness(0.9); }
+        .btn-success { background: var(--success); color: white; }
 
-        audio { display: none; }
+        /* 버전 표시 */
+        .footer-version {
+            position: fixed;
+            bottom: 15px;
+            right: 20px;
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -270,14 +295,17 @@
     <div id="startScreen" class="screen active">
         <div class="start-group">
             <div class="select-wrapper">
-                <span>제한 시간 설정</span>
+                <span>타이머 설정</span>
                 <select id="timeSelect">
                     <option value="60">1분</option>
-                    <option value="120">2분</option>
                     <option value="180">3분</option>
+                    <option value="300">5분</option>
+                    <option value="600">10분</option>
+                    <option value="unlimited">무제한 모드</option>
                 </select>
             </div>
             <button class="btn btn-full" id="startBtn">🎮 게임 시작</button>
+            <button class="btn btn-full btn-sub" id="viewRankBtn">🏆 순위표 보기</button>
         </div>
     </div>
 
@@ -296,7 +324,7 @@
 
         <div class="player-card">
             <div class="controls-row">
-                <button class="btn btn-sub" id="pauseBtn">⏸️ 일시정지</button>
+                <button class="btn btn-sub" id="pauseBtn">▶️ 재생 (5초)</button>
                 <button class="btn" id="play30Btn">▶️ 30초 듣기</button>
             </div>
             <div class="volume-control">
@@ -306,7 +334,7 @@
         </div>
 
         <div style="text-align: center; margin-bottom: 16px;">
-            <button class="btn btn-warning" id="hintBtn">💡 힌트 보기</button>
+            <button class="btn btn-warning" id="hintBtn">💡 초성 힌트 보기</button>
         </div>
         <div class="hint-box" id="hintBox"></div>
 
@@ -316,7 +344,13 @@
         </div>
         <p class="notice">* 띄어쓰기는 틀려도 글자만 맞으면 정답 처리됩니다.</p>
         
+        <!-- 오디오 (효과음 & 음악) -->
         <audio id="audioPlayer"></audio>
+        <audio id="sfxCorrect" src="correct.mp3"></audio>
+        <audio id="sfxWrong" src="wrong.mp3"></audio>
+
+        <!-- 알림창 (Toast) -->
+        <div id="toastMessage" class="toast">정답 알림창</div>
     </div>
 
     <!-- 3. 게임 종료 화면 -->
@@ -324,17 +358,31 @@
         <div class="result-card">
             <div class="result-title">게임 종료!</div>
             <div class="score-display" id="finalScore">0개</div>
-            <div class="tier-badge" id="tierBadge">🥉 브론즈</div>
-            <p class="result-ment" id="resultMent">조금 더 도전해보세요!</p>
-            <button class="btn btn-full" id="restartBtn">🔄 다시 하기</button>
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+                <button class="btn btn-success" id="saveRankBtn">💾 기록 저장하기</button>
+                <button class="btn btn-sub" id="restartBtn">🏠 처음으로</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 순위표 화면 -->
+    <div id="rankScreen" class="screen">
+        <div class="rank-card">
+            <div class="result-title">🏆 명예의 전당</div>
+            <p class="notice">※ 내 기기(브라우저)의 로컬 기록입니다.</p>
+            <ul class="rank-list" id="rankList">
+                <!-- JS에서 채워짐 -->
+            </ul>
+            <button class="btn btn-full btn-sub" id="backToStartBtn">🏠 뒤로 가기</button>
         </div>
     </div>
 </div>
 
+<div class="footer-version">(버전 : BETA)</div>
+
 <script>
-// Part 1 & Part 5 곡 목록 데이터
+// Part 1 & Part 5 곡 목록 데이터 (기존과 동일)
 const playlist = [
-  // --- PART 1 ---
   { title: "My Way remix", src: "part1/My Way remix.mp3" },
   { title: "My way", src: "part1/My way.mp3" },
   { title: "가는 길", src: "part1/가는 길.mp3" },
@@ -376,7 +424,6 @@ const playlist = [
   { title: "깨닫도록 하였다", src: "part1/깨닫도록 하였다.mp3" },
   { title: "깨달아라", src: "part1/깨달아라.mp3" },
 
-  // --- PART 5 ---
   { title: "추부 IC", src: "part5/추부 IC.mp3" },
   { title: "큰 사람", src: "part5/큰 사람.mp3" },
   { title: "평화와 영광", src: "part5/평화와 영광.mp3" },
@@ -405,152 +452,222 @@ let score = 0;
 let timer = null;
 let timeLeft = 60;
 let emptyEnterCount = 0;
+let wrongAttempts = 0;
+let isUnlimited = false;
+let maxPlaySeconds = 5; 
 
-// Element 로드
-const startScreen = document.getElementById('startScreen');
-const gameScreen = document.getElementById('gameScreen');
-const resultScreen = document.getElementById('resultScreen');
-
+// DOM Elements
+const screens = document.querySelectorAll('.screen');
 const timeSelect = document.getElementById('timeSelect');
-const startBtn = document.getElementById('startBtn');
-const restartBtn = document.getElementById('restartBtn');
-
 const timerEl = document.getElementById('timer');
 const scoreEl = document.getElementById('score');
 const audioPlayer = document.getElementById('audioPlayer');
-const pauseBtn = document.getElementById('pauseBtn');
-const play30Btn = document.getElementById('play30Btn');
-const volumeSlider = document.getElementById('volumeSlider');
-
-const hintBtn = document.getElementById('hintBtn');
-const hintBox = document.getElementById('hintBox');
+const sfxCorrect = document.getElementById('sfxCorrect');
+const sfxWrong = document.getElementById('sfxWrong');
 const answerInput = document.getElementById('answerInput');
-const submitBtn = document.getElementById('submitBtn');
-
-const finalScore = document.getElementById('finalScore');
-const tierBadge = document.getElementById('tierBadge');
-const resultMent = document.getElementById('resultMent');
+const hintBox = document.getElementById('hintBox');
+const toastMessage = document.getElementById('toastMessage');
+const rankList = document.getElementById('rankList');
 
 // 셔플 함수
-function shuffle(arr) {
-    return arr.sort(() => Math.random() - 0.5);
-}
+function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
 
 // 화면 전환
-function showScreen(screen) {
-    [startScreen, gameScreen, resultScreen].forEach(s => s.classList.remove('active'));
-    screen.classList.add('active');
+function showScreen(screenId) {
+    screens.forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+}
+
+// 토스트 메시지
+function showToast(msg, duration = 2000, callback = null) {
+    toastMessage.textContent = msg;
+    toastMessage.style.display = 'block';
+    
+    // 알림이 떠있는 동안 입력창 비활성화
+    answerInput.disabled = true;
+    document.getElementById('submitBtn').disabled = true;
+
+    setTimeout(() => {
+        toastMessage.style.display = 'none';
+        answerInput.disabled = false;
+        document.getElementById('submitBtn').disabled = false;
+        answerInput.focus();
+        if (callback) callback();
+    }, duration);
+}
+
+// 초성 추출 함수 (Point 1)
+function getChosung(str) {
+    const cho = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+    let result = "";
+    for (let i = 0; i < str.length; i++) {
+        const code = str.charCodeAt(i) - 44032;
+        if (code > -1 && code < 11172) result += cho[Math.floor(code / 588)];
+        else result += str.charAt(i); // 한글이 아닌 경우 원본 유지(영어, 숫자, 띄어쓰기)
+    }
+    return result;
+}
+
+// 점수 업데이트 (Point 2)
+function updateScoreDisplay() {
+    if (isUnlimited) {
+        scoreEl.textContent = `${score} / ${shuffledList.length}개`;
+    } else {
+        scoreEl.textContent = `${score}개`;
+    }
 }
 
 // 게임 시작
-startBtn.addEventListener('click', () => {
-    timeLeft = parseInt(timeSelect.value);
+document.getElementById('startBtn').addEventListener('click', () => {
+    const selectedTime = timeSelect.value;
+    isUnlimited = (selectedTime === 'unlimited');
+    timeLeft = isUnlimited ? 0 : parseInt(selectedTime);
+    
     score = 0;
     currentIndex = 0;
     shuffledList = shuffle([...playlist]);
+    updateScoreDisplay();
     
-    scoreEl.textContent = `${score}개`;
-    updateTimerDisplay();
-    
-    showScreen(gameScreen);
-    nextQuestion();
-    
-    clearInterval(timer);
-    timer = setInterval(() => {
-        timeLeft--;
+    if (isUnlimited) {
+        timerEl.textContent = "무제한";
+    } else {
         updateTimerDisplay();
-        if (timeLeft <= 0) {
-            endGame();
-        }
-    }, 1000);
+        clearInterval(timer);
+        timer = setInterval(() => {
+            timeLeft--;
+            updateTimerDisplay();
+            if (timeLeft <= 0) endGame();
+        }, 1000);
+    }
+    
+    showScreen('gameScreen');
+    nextQuestion();
 });
 
 function updateTimerDisplay() {
+    if (isUnlimited) return;
     const min = String(Math.floor(timeLeft / 60)).padStart(2, '0');
     const sec = String(timeLeft % 60).padStart(2, '0');
     timerEl.textContent = `${min}:${sec}`;
 }
 
-// 다음 문제 로드
+// 문제 로드
 function nextQuestion() {
     if (currentIndex >= shuffledList.length) {
         endGame();
         return;
     }
-    
     hintBox.style.display = 'none';
     answerInput.value = '';
+    answerInput.placeholder = '정답 입력 (빈칸 시 엔터 2번 = 패스)';
     emptyEnterCount = 0;
+    wrongAttempts = 0; // 틀린 횟수 초기화
     
     const currentSong = shuffledList[currentIndex];
     audioPlayer.src = currentSong.src;
-    audioPlayer.volume = volumeSlider.value;
-    audioPlayer.play().catch(e => console.log('Auto play blocked'));
+    audioPlayer.volume = document.getElementById('volumeSlider').value;
+    
+    playAudioLimit(5); // 최초 5초 재생
 }
 
-// 오디오 제어
-pauseBtn.addEventListener('click', () => {
-    if (audioPlayer.paused) {
-        audioPlayer.play();
-        pauseBtn.textContent = '⏸️ 일시정지';
-    } else {
+// 오디오 재생 제한 (Point 6)
+function playAudioLimit(seconds) {
+    maxPlaySeconds = seconds;
+    audioPlayer.currentTime = 0;
+    audioPlayer.play().catch(e => console.log('Auto play blocked'));
+    document.getElementById('pauseBtn').textContent = '⏸️ 일시정지';
+}
+
+audioPlayer.addEventListener('timeupdate', () => {
+    if (audioPlayer.currentTime >= maxPlaySeconds && !audioPlayer.paused) {
         audioPlayer.pause();
-        pauseBtn.textContent = '▶️ 재생';
+        document.getElementById('pauseBtn').textContent = '▶️ 재생 (5초)';
     }
 });
 
-play30Btn.addEventListener('click', () => {
-    audioPlayer.currentTime = 0;
-    audioPlayer.play();
-    setTimeout(() => {
+// 오디오 버튼 제어
+document.getElementById('pauseBtn').addEventListener('click', () => {
+    if (audioPlayer.paused) {
+        playAudioLimit(5);
+    } else {
         audioPlayer.pause();
-    }, 30000);
+        document.getElementById('pauseBtn').textContent = '▶️ 재생 (5초)';
+    }
 });
 
-volumeSlider.addEventListener('input', (e) => {
+document.getElementById('play30Btn').addEventListener('click', () => {
+    playAudioLimit(30);
+});
+
+document.getElementById('volumeSlider').addEventListener('input', (e) => {
     audioPlayer.volume = e.target.value;
 });
 
 // 힌트 보기
-hintBtn.addEventListener('click', () => {
+document.getElementById('hintBtn').addEventListener('click', () => {
     const title = shuffledList[currentIndex].title;
-    hintBox.textContent = `💡 힌트: 글자 수 [${title.length}글자] / 첫 글자 [${title[0]}]`;
+    const chosung = getChosung(title);
+    hintBox.textContent = `💡 힌트: [ ${chosung} ]`;
     hintBox.style.display = 'block';
 });
 
-// 정답 확인
+// 정답 확인 및 처리 (Point 3 & 8)
 function checkAnswer() {
     const input = answerInput.value.trim();
+    const currentTitle = shuffledList[currentIndex].title;
     
-    // 빈칸 엔터 2번 시 패스 처리
+    // 패스 처리 (빈칸 엔터 2번)
     if (!input) {
         emptyEnterCount++;
         if (emptyEnterCount >= 2) {
-            currentIndex++;
-            nextQuestion();
+            audioPlayer.pause();
+            showToast(`⏭️ 패스! 정답은 [ ${currentTitle} ] 입니다.`, 2000, () => {
+                currentIndex++;
+                nextQuestion();
+            });
+        } else {
+            answerInput.placeholder = '한 번 더 누르면 패스됩니다.';
         }
         return;
     }
     
     emptyEnterCount = 0;
     const cleanUser = input.replace(/[\s\?\!\.\,\~\(\)\-_]/g, "").toLowerCase();
-    const cleanTarget = shuffledList[currentIndex].title.replace(/[\s\?\!\.\,\~\(\)\-_]/g, "").toLowerCase();
+    const cleanTarget = currentTitle.replace(/[\s\?\!\.\,\~\(\)\-_]/g, "").toLowerCase();
     
     if (cleanUser === cleanTarget) {
+        // 정답 (효과음 재생)
+        audioPlayer.pause();
+        sfxCorrect.currentTime = 0;
+        sfxCorrect.play().catch(e=>{});
+        
         score++;
-        scoreEl.textContent = `${score}개`;
-        currentIndex++;
-        nextQuestion();
+        updateScoreDisplay();
+        showToast("🎉 정답입니다!", 1200, () => {
+            currentIndex++;
+            nextQuestion();
+        });
     } else {
+        // 오답 처리
+        wrongAttempts++;
+        sfxWrong.currentTime = 0;
+        sfxWrong.play().catch(e=>{});
+        
         answerInput.value = '';
-        answerInput.placeholder = '❌ 틀렸습니다! 다시 입력하세요';
-        setTimeout(() => {
-            answerInput.placeholder = '정답 입력 (빈칸 시 엔터 2번 = 패스)';
-        }, 1200);
+        
+        if (wrongAttempts >= 3) {
+            audioPlayer.pause();
+            showToast(`❌ 3회 오답! 정답은 [ ${currentTitle} ] 입니다.`, 2000, () => {
+                currentIndex++;
+                nextQuestion();
+            });
+        } else {
+            answerInput.placeholder = `❌ 오답! (${3 - wrongAttempts}번의 기회 남음)`;
+        }
     }
 }
 
-submitBtn.addEventListener('click', checkAnswer);
+document.getElementById('submitBtn').addEventListener('click', checkAnswer);
 answerInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') checkAnswer();
 });
@@ -559,31 +676,50 @@ answerInput.addEventListener('keypress', (e) => {
 function endGame() {
     clearInterval(timer);
     audioPlayer.pause();
-    
-    finalScore.textContent = `${score}개`;
-    
-    // 티어 판정
-    if (score >= 15) {
-        tierBadge.textContent = '👑 마스터';
-        resultMent.textContent = '엄청난 실력이시네요! 섭리 명곡 완벽 마스터!';
-    } else if (score >= 10) {
-        tierBadge.textContent = '🥇 골드';
-        resultMent.textContent = '대단합니다! 상당한 내공의 소유자시군요!';
-    } else if (score >= 5) {
-        tierBadge.textContent = '🥈 실버';
-        resultMent.textContent = '좋은 성적입니다! 조금만 더 하면 골드 달성!';
-    } else {
-        tierBadge.textContent = '🥉 브론즈';
-        resultMent.textContent = '더 연습해서 다시 도전해보세요!';
-    }
-    
-    showScreen(resultScreen);
+    document.getElementById('finalScore').textContent = isUnlimited ? `${score} / ${shuffledList.length}개` : `${score}개`;
+    showScreen('resultScreen');
 }
 
-restartBtn.addEventListener('click', () => {
-    showScreen(startScreen);
-});
-</script>
+// 랭킹 시스템 로직 (Point 5)
+function loadRanking() {
+    const ranks = JSON.parse(localStorage.getItem('melodyRank') || '[]');
+    rankList.innerHTML = '';
+    
+    if(ranks.length === 0) {
+        rankList.innerHTML = '<li style="text-align:center; color:#94a3b8;">아직 등록된 기록이 없습니다.</li>';
+        return;
+    }
+    
+    // 점수 내림차순 정렬
+    ranks.sort((a, b) => b.score - a.score);
+    
+    ranks.forEach((r, idx) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${idx + 1}위. ${r.name}</span> <span>${r.score}개 (${r.mode})</span>`;
+        rankList.appendChild(li);
+    });
+}
 
+document.getElementById('saveRankBtn').addEventListener('click', () => {
+    const name = prompt("순위표에 등록할 닉네임을 입력하세요 (최대 8글자):");
+    if(name) {
+        const ranks = JSON.parse(localStorage.getItem('melodyRank') || '[]');
+        const modeText = isUnlimited ? '무제한' : `${timeSelect.value}초`;
+        ranks.push({ name: name.substring(0, 8), score: score, mode: modeText });
+        localStorage.setItem('melodyRank', JSON.stringify(ranks));
+        alert("기록이 저장되었습니다!");
+        document.getElementById('saveRankBtn').style.display = 'none'; // 중복 방지
+    }
+});
+
+// 화면 이동 버튼들
+document.getElementById('restartBtn').addEventListener('click', () => showScreen('startScreen'));
+document.getElementById('viewRankBtn').addEventListener('click', () => {
+    loadRanking();
+    showScreen('rankScreen');
+});
+document.getElementById('backToStartBtn').addEventListener('click', () => showScreen('startScreen'));
+
+</script>
 </body>
 </html>
