@@ -45,6 +45,35 @@
             overflow: hidden;
         }
 
+        /* 왼쪽 상단 나가기 버튼 */
+        .exit-btn {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            padding: 6px;
+            border-radius: 10px;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .exit-btn:hover {
+            background: #f1f5f9;
+        }
+
+        .exit-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: #64748b;
+        }
+
         .header {
             text-align: center;
             margin-bottom: 24px;
@@ -89,6 +118,7 @@
             color: var(--primary);
             outline: none;
             cursor: pointer;
+            text-align: right;
         }
 
         /* 게임 화면 */
@@ -295,6 +325,13 @@
     <div id="startScreen" class="screen active">
         <div class="start-group">
             <div class="select-wrapper">
+                <span>게임 모드</span>
+                <select id="modeSelect">
+                    <option value="normal">일반 모드 (처음부터)</option>
+                    <option value="special">Special 모드 (중간부터)</option>
+                </select>
+            </div>
+            <div class="select-wrapper">
                 <span>타이머 설정</span>
                 <select id="timeSelect">
                     <option value="60">1분</option>
@@ -311,6 +348,13 @@
 
     <!-- 2. 게임 진행 화면 -->
     <div id="gameScreen" class="screen">
+        <!-- 나가기 버튼 -->
+        <button id="exitGameBtn" class="exit-btn" title="게임 나가기">
+            <svg viewBox="0 0 24 24">
+                <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
+            </svg>
+        </button>
+
         <div class="status-board">
             <div class="status-item">
                 <span class="label">⏱️ 남은 시간</span>
@@ -346,6 +390,7 @@
         
         <!-- 오디오 (효과음 & 음악) -->
         <audio id="audioPlayer"></audio>
+        <!-- 효과음 파일명이 소문자(.mp3)인지 대문자(.MP3)인지 꼭 확인 후 맞춰주세요! -->
         <audio id="sfxCorrect" src="correct.mp3"></audio>
         <audio id="sfxWrong" src="wrong.mp3"></audio>
 
@@ -378,7 +423,7 @@
     </div>
 </div>
 
-<div class="footer-version">(버전 : BETA)</div>
+<div class="footer-version">BTEA</div>
 
 <script>
 // Part 1 & Part 5 곡 목록 데이터 (기존과 동일)
@@ -454,10 +499,13 @@ let timeLeft = 60;
 let emptyEnterCount = 0;
 let wrongAttempts = 0;
 let isUnlimited = false;
+let currentMode = 'normal'; // 'normal' 또는 'special'
 let maxPlaySeconds = 5; 
+let startPlayTime = 0; // 재생 시작 위치 추적
 
 // DOM Elements
 const screens = document.querySelectorAll('.screen');
+const modeSelect = document.getElementById('modeSelect');
 const timeSelect = document.getElementById('timeSelect');
 const timerEl = document.getElementById('timer');
 const scoreEl = document.getElementById('score');
@@ -483,7 +531,6 @@ function showToast(msg, duration = 2000, callback = null) {
     toastMessage.textContent = msg;
     toastMessage.style.display = 'block';
     
-    // 알림이 떠있는 동안 입력창 비활성화
     answerInput.disabled = true;
     document.getElementById('submitBtn').disabled = true;
 
@@ -496,19 +543,19 @@ function showToast(msg, duration = 2000, callback = null) {
     }, duration);
 }
 
-// 초성 추출 함수 (Point 1)
+// 초성 추출 함수
 function getChosung(str) {
     const cho = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
     let result = "";
     for (let i = 0; i < str.length; i++) {
         const code = str.charCodeAt(i) - 44032;
         if (code > -1 && code < 11172) result += cho[Math.floor(code / 588)];
-        else result += str.charAt(i); // 한글이 아닌 경우 원본 유지(영어, 숫자, 띄어쓰기)
+        else result += str.charAt(i); 
     }
     return result;
 }
 
-// 점수 업데이트 (Point 2)
+// 점수 업데이트
 function updateScoreDisplay() {
     if (isUnlimited) {
         scoreEl.textContent = `${score} / ${shuffledList.length}개`;
@@ -519,7 +566,9 @@ function updateScoreDisplay() {
 
 // 게임 시작
 document.getElementById('startBtn').addEventListener('click', () => {
+    currentMode = modeSelect.value;
     const selectedTime = timeSelect.value;
+    
     isUnlimited = (selectedTime === 'unlimited');
     timeLeft = isUnlimited ? 0 : parseInt(selectedTime);
     
@@ -561,25 +610,38 @@ function nextQuestion() {
     answerInput.value = '';
     answerInput.placeholder = '정답 입력 (빈칸 시 엔터 2번 = 패스)';
     emptyEnterCount = 0;
-    wrongAttempts = 0; // 틀린 횟수 초기화
+    wrongAttempts = 0; 
     
     const currentSong = shuffledList[currentIndex];
     audioPlayer.src = currentSong.src;
     audioPlayer.volume = document.getElementById('volumeSlider').value;
     
-    playAudioLimit(5); // 최초 5초 재생
+    // 오디오 메타데이터(곡 길이)를 불러온 후 재생 시작
+    audioPlayer.load();
+    audioPlayer.onloadedmetadata = () => {
+        playAudioLimit(5); 
+    };
 }
 
-// 오디오 재생 제한 (Point 6)
+// 오디오 재생 제한 제어
 function playAudioLimit(seconds) {
     maxPlaySeconds = seconds;
-    audioPlayer.currentTime = 0;
+    
+    // 재생 시작 위치 설정 (Special 모드: 50%, 일반 모드: 0%)
+    if (currentMode === 'special' && audioPlayer.duration) {
+        startPlayTime = audioPlayer.duration / 2;
+    } else {
+        startPlayTime = 0;
+    }
+    
+    audioPlayer.currentTime = startPlayTime;
     audioPlayer.play().catch(e => console.log('Auto play blocked'));
     document.getElementById('pauseBtn').textContent = '⏸️ 일시정지';
 }
 
 audioPlayer.addEventListener('timeupdate', () => {
-    if (audioPlayer.currentTime >= maxPlaySeconds && !audioPlayer.paused) {
+    // 시작된 시간(startPlayTime)을 기준으로 제한 시간(maxPlaySeconds) 도달 시 정지
+    if (audioPlayer.currentTime >= startPlayTime + maxPlaySeconds && !audioPlayer.paused) {
         audioPlayer.pause();
         document.getElementById('pauseBtn').textContent = '▶️ 재생 (5초)';
     }
@@ -611,12 +673,11 @@ document.getElementById('hintBtn').addEventListener('click', () => {
     hintBox.style.display = 'block';
 });
 
-// 정답 확인 및 처리 (Point 3 & 8)
+// 정답 확인 및 처리
 function checkAnswer() {
     const input = answerInput.value.trim();
     const currentTitle = shuffledList[currentIndex].title;
     
-    // 패스 처리 (빈칸 엔터 2번)
     if (!input) {
         emptyEnterCount++;
         if (emptyEnterCount >= 2) {
@@ -636,7 +697,6 @@ function checkAnswer() {
     const cleanTarget = currentTitle.replace(/[\s\?\!\.\,\~\(\)\-_]/g, "").toLowerCase();
     
     if (cleanUser === cleanTarget) {
-        // 정답 (효과음 재생)
         audioPlayer.pause();
         sfxCorrect.currentTime = 0;
         sfxCorrect.play().catch(e=>{});
@@ -648,7 +708,6 @@ function checkAnswer() {
             nextQuestion();
         });
     } else {
-        // 오답 처리
         wrongAttempts++;
         sfxWrong.currentTime = 0;
         sfxWrong.play().catch(e=>{});
@@ -672,6 +731,15 @@ answerInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') checkAnswer();
 });
 
+// 게임 도중 나가기 버튼
+document.getElementById('exitGameBtn').addEventListener('click', () => {
+    if (confirm("정말 게임을 종료하고 나가시겠습니까?")) {
+        clearInterval(timer);
+        audioPlayer.pause();
+        showScreen('startScreen');
+    }
+});
+
 // 게임 종료
 function endGame() {
     clearInterval(timer);
@@ -680,7 +748,7 @@ function endGame() {
     showScreen('resultScreen');
 }
 
-// 랭킹 시스템 로직 (Point 5)
+// 랭킹 시스템 로직
 function loadRanking() {
     const ranks = JSON.parse(localStorage.getItem('melodyRank') || '[]');
     rankList.innerHTML = '';
@@ -690,7 +758,6 @@ function loadRanking() {
         return;
     }
     
-    // 점수 내림차순 정렬
     ranks.sort((a, b) => b.score - a.score);
     
     ranks.forEach((r, idx) => {
@@ -704,11 +771,13 @@ document.getElementById('saveRankBtn').addEventListener('click', () => {
     const name = prompt("순위표에 등록할 닉네임을 입력하세요 (최대 8글자):");
     if(name) {
         const ranks = JSON.parse(localStorage.getItem('melodyRank') || '[]');
-        const modeText = isUnlimited ? '무제한' : `${timeSelect.value}초`;
+        let modeText = isUnlimited ? '무제한' : `${timeSelect.value}초`;
+        modeText += currentMode === 'special' ? ' (Special)' : ''; // 모드 구분을 위해 추가
+        
         ranks.push({ name: name.substring(0, 8), score: score, mode: modeText });
         localStorage.setItem('melodyRank', JSON.stringify(ranks));
         alert("기록이 저장되었습니다!");
-        document.getElementById('saveRankBtn').style.display = 'none'; // 중복 방지
+        document.getElementById('saveRankBtn').style.display = 'none'; 
     }
 });
 
