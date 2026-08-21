@@ -418,7 +418,7 @@
     <div id="rankScreen" class="screen">
         <div class="rank-card">
             <div class="result-title">🏆 명예의 전당</div>
-            <p class="notice">※ 내 기기(브라우저)의 로컬 기록입니다.</p>
+            <p class="notice">※ 실시간 전국 랭킹 기록입니다.</p>
             <ul class="rank-list" id="rankList">
                 <!-- JS에서 채워짐 -->
             </ul>
@@ -813,10 +813,10 @@ function loadRanking() {
         // 상위 50명 표시
         ranks.slice(0, 50).forEach((r, idx) => {
             const li = document.createElement('li');
-            li.style.cssText = "display:flex; justify-content:space-between; padding:8px 12px; border-bottom:1px solid #334155;";
+            li.style.cssText = "display:flex; justify-content:space-between; padding:8px 12px; border-bottom: 1px solid #e2e8f0;";
             li.innerHTML = `
                 <span><strong>${idx + 1}위.</strong> ${r.name}</span>
-                <span style="color:#38bdf8; font-weight:bold;">${r.score}개 <small style="color:#94a3b8; font-weight:normal;">(${r.mode})</small></span>
+                <span style="color:var(--primary);; font-weight:bold;">${r.score}개 <small style="color:#94a3b8; font-weight:normal;">(${r.mode})</small></span>
             `;
             rankList.appendChild(li);
         });
