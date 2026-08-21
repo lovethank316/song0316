@@ -30,7 +30,6 @@
         }
         .screen { display: none; }
         .screen.active { display: block; }
-        .hidden { display: none !important; }
         
         .btn {
             width: 100%;
@@ -57,7 +56,7 @@
             box-sizing: border-box;
         }
 
-        /* ✨ 새로 적용된 남은 시간 & 맞춘 개수 디자인 ✨ */
+        /* 남은 시간 & 맞춘 개수 디자인 */
         .status-box {
             display: flex;
             justify-content: space-between;
@@ -83,7 +82,7 @@
             margin-top: 4px;
         }
 
-        /* ✨ 새로 적용된 정답 입력창 디자인 ✨ */
+        /* 정답 입력창 디자인 */
         .input-area {
             display: flex;
             gap: 10px;
@@ -147,7 +146,7 @@
             text-align: center;
         }
 
-        /* 랭킹 리스트 스타일 */
+        /* 랭킹 리스트 및 버튼 스타일 */
         .rank-list {
             list-style: none;
             padding: 0;
@@ -167,6 +166,25 @@
         .rank-item:nth-child(1) { background: #fef08a; font-weight: bold; } /* 1등 금색 */
         .rank-item:nth-child(2) { background: #e2e8f0; font-weight: bold; } /* 2등 은색 */
         .rank-item:nth-child(3) { background: #fed7aa; font-weight: bold; } /* 3등 동색 */
+        
+        /* 랭킹 탭 버튼들 */
+        .rank-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .rank-time-btn {
+            width: auto;
+            padding: 8px 12px;
+            margin: 0;
+            font-size: 13px;
+        }
+        .rank-time-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -211,7 +229,6 @@
             
             <div id="toastMessage" class="toast"></div>
 
-            <!-- 변경된 상태창 디자인 -->
             <div class="status-box">
                 <div class="status-item">
                     남은 시간
@@ -239,7 +256,6 @@
             <button id="hintBtn" class="btn btn-sub">💡 초성 힌트 보기</button>
             <div id="hintBox" style="margin: 10px 0; font-weight: bold; color: #4f46e5; text-align: center;"></div>
 
-            <!-- 변경된 입력창 디자인 -->
             <div class="input-area">
                 <input type="text" id="answerInput" placeholder="정답을 입력하세요" autocomplete="off">
                 <button id="submitBtn" class="btn btn-main">확인</button>
@@ -248,7 +264,7 @@
             <div style="font-size: 12px; color: #ef4444; margin-top: 5px;">* 빈칸 상태에서 빠르게 엔터를 두 번 연타하면 패스됩니다.</div>
         </div>
 
-        <!-- 3. 결과 및 랭킹 등록 화면 (복구됨) -->
+        <!-- 3. 결과 및 랭킹 등록 화면 -->
         <div id="resultsScreen" class="screen">
             <h2 style="text-align: center;">🎉 게임 종료!</h2>
             <div id="finalScore" style="text-align: center; font-size: 24px; font-weight: bold; color: #4f46e5; margin: 20px 0;"></div>
@@ -263,26 +279,24 @@
             <button id="backToStartBtn" class="btn btn-secondary">메인 메뉴로</button>
         </div>
 
-        <!-- 4. 명예의 전당 (랭킹) 화면 (복구됨) -->
+        <!-- 4. 명예의 전당 (랭킹) 화면 (버튼 형태로 수정) -->
         <div id="rankScreen" class="screen">
-            <h2 style="text-align: center;">🏆 명예의 전당</h2>
+            <h2 style="text-align: center; margin-bottom: 15px;">🏆 명예의 전당</h2>
             
-            <div class="form-group">
-                <label for="rankTimeSelect">조회할 시간대 선택</label>
-                <select id="rankTimeSelect">
-                    <option value="60">1분 모드</option>
-                    <option value="180">3분 모드</option>
-                    <option value="300">5분 모드</option>
-                    <option value="600">10분 모드</option>
-                    <option value="unlimited">무제한 모드</option>
-                </select>
+            <!-- 셀렉트 박스 대신 버튼 그룹 사용 -->
+            <div class="rank-tabs">
+                <button class="btn btn-sub rank-time-btn active" data-time="60">1분</button>
+                <button class="btn btn-sub rank-time-btn" data-time="180">3분</button>
+                <button class="btn btn-sub rank-time-btn" data-time="300">5분</button>
+                <button class="btn btn-sub rank-time-btn" data-time="600">10분</button>
+                <button class="btn btn-sub rank-time-btn" data-time="unlimited">무제한</button>
             </div>
 
             <ul id="rankList" class="rank-list">
                 <!-- 랭킹 데이터가 여기에 표시됩니다 -->
             </ul>
 
-            <button id="closeRankBtn" class="btn btn-secondary">메인 메뉴로 돌아가기</button>
+            <button id="closeRankBtn" class="btn btn-secondary" style="margin-top: 15px;">메인 메뉴로 돌아가기</button>
         </div>
 
         <!-- 5. 📚 공부하기 방 화면 -->
@@ -692,7 +706,6 @@
         ========================================== */
         let audio = new Audio();
         
-        // 정답/오답 효과음 설정
         const correctSfx = new Audio('correct.mp3');
         const wrongSfx = new Audio('wrong.mp3');
 
@@ -702,9 +715,9 @@
         let timerInterval = null;
         let timeLeft = 0;
         let isUnlimited = false;
-        let currentTimeMode = "60"; // 게임 끝난 후 랭킹 등록 시 사용할 모드 기록
+        let currentTimeMode = "60"; 
 
-        let lastEmptySubmitTime = 0; // 더블 탭(연타) 패스를 위한 시간 변수
+        let lastEmptySubmitTime = 0; 
 
         /* ==========================================
            4. 화면 전환 및 유틸 함수
@@ -790,21 +803,22 @@
             });
         }
 
-        // 정답 확인 로직 (2연타 패스 포함)
         function checkAnswer() {
             const answerInput = document.getElementById('answerInput');
             const userAnswer = answerInput.value.replace(/\s/g, '').toLowerCase();
-            const correctAnswer = shuffledPlaylist[currentSongIndex].title.replace(/\s/g, '').toLowerCase();
+            const originalTitle = shuffledPlaylist[currentSongIndex].title;
+            const correctAnswer = originalTitle.replace(/\s/g, '').toLowerCase();
 
-            // 빈칸일 경우 로직 (더블 탭 패스)
             if (userAnswer === '') {
                 const now = Date.now();
                 if (now - lastEmptySubmitTime < 500) { 
-                    // 0.5초(500ms) 안에 두 번 연타했을 때 패스 처리
-                    showToast("패스! 다음 곡으로 넘어갑니다.");
+                    showToast("패스! 정답은 [" + originalTitle + "] 입니다.");
+                    wrongSfx.currentTime = 0;
+                    wrongSfx.play(); 
+                    
                     currentSongIndex++;
                     playNextSong();
-                    lastEmptySubmitTime = 0; // 초기화
+                    lastEmptySubmitTime = 0; 
                 } else {
                     showToast("한 번 더 누르면 패스됩니다.");
                     lastEmptySubmitTime = now;
@@ -812,13 +826,12 @@
                 return;
             }
 
-            // 답을 입력했을 경우
             if (userAnswer === correctAnswer) {
                 score++;
                 document.getElementById('score').textContent = score;
                 showToast("정답입니다! 🎉");
                 correctSfx.currentTime = 0;
-                correctSfx.play(); // 정답 효과음
+                correctSfx.play();
                 
                 answerInput.value = '';
                 lastEmptySubmitTime = 0;
@@ -827,10 +840,10 @@
             } else {
                 showToast("틀렸습니다. 다시 시도해보세요!");
                 wrongSfx.currentTime = 0;
-                wrongSfx.play(); // 오답 효과음
+                wrongSfx.play();
                 
-                answerInput.value = ''; // 오답 시 빈칸으로 만듦 -> 이 상태로 엔터 한번 더 누르면 위 로직에 의해 패스 대기상태가 됨
-                lastEmptySubmitTime = Date.now(); // 틀리자마자 바로 엔터치면 패스될 수 있게 세팅
+                answerInput.value = ''; 
+                lastEmptySubmitTime = Date.now();
             }
         }
 
@@ -843,7 +856,7 @@
             clearInterval(timerInterval);
             audio.pause();
             document.getElementById('finalScore').textContent = `최종 점수: ${score}점`;
-            document.getElementById('playerName').value = ''; // 이름 입력창 초기화
+            document.getElementById('playerName').value = ''; 
             showScreen('resultsScreen');
         }
 
@@ -852,7 +865,6 @@
         document.getElementById('backToStartBtn').addEventListener('click', () => showScreen('startScreen'));
         document.getElementById('restartBtn').addEventListener('click', () => showScreen('startScreen'));
 
-        // 버튼들
         document.getElementById('volumeSlider').addEventListener('input', (e) => { audio.volume = e.target.value; });
         document.getElementById('pauseBtn').addEventListener('click', (e) => {
             if (audio.paused) { audio.play(); e.target.textContent = '⏸️ 일시정지'; }
@@ -879,16 +891,14 @@
         });
 
         /* ==========================================
-           6. 명예의 전당 (Firebase 저장 및 불러오기) 복구
+           6. 명예의 전당 (버튼 탭 형식 적용)
         ========================================== */
-        // 점수 저장
         document.getElementById('saveScoreBtn').addEventListener('click', () => {
             const name = document.getElementById('playerName').value.trim();
             if (!name) {
                 alert("이름을 입력해주세요!");
                 return;
             }
-            // 선택했던 시간대 폴더에 저장 (예: rankings/60, rankings/unlimited)
             db.ref('rankings/' + currentTimeMode).push({
                 name: name,
                 score: score,
@@ -901,31 +911,41 @@
             });
         });
 
-        // 명예의 전당 보기
         document.getElementById('viewRankBtn').addEventListener('click', () => {
             showScreen('rankScreen');
-            loadRankings(); // 현재 선택된 select 박스의 기준으로 불러오기
+            // 진입 시 기본으로 1분 모드(60) 선택 표시
+            document.querySelectorAll('.rank-time-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.rank-time-btn[data-time="60"]').classList.add('active');
+            loadRankings('60'); 
         });
 
         document.getElementById('closeRankBtn').addEventListener('click', () => showScreen('startScreen'));
 
-        // select 박스 변경 시 랭킹 다시 불러오기
-        document.getElementById('rankTimeSelect').addEventListener('change', loadRankings);
+        // 버튼 클릭 이벤트 리스너 추가
+        document.querySelectorAll('.rank-time-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // 클릭한 버튼 활성화 스타일 변경
+                document.querySelectorAll('.rank-time-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                // 해당 시간 데이터 불러오기
+                const timeLimit = e.target.getAttribute('data-time');
+                loadRankings(timeLimit);
+            });
+        });
 
-        function loadRankings() {
-            const timeLimit = document.getElementById('rankTimeSelect').value;
+        function loadRankings(timeLimit) {
             const rankListUl = document.getElementById('rankList');
             rankListUl.innerHTML = '<li style="text-align:center;">데이터를 불러오는 중입니다...</li>';
 
             db.ref('rankings/' + timeLimit).orderByChild('score').once('value', snapshot => {
-                rankListUl.innerHTML = ''; // 초기화
+                rankListUl.innerHTML = ''; 
                 const rankings = [];
                 
                 snapshot.forEach(child => {
                     rankings.push(child.val());
                 });
 
-                // 내림차순 정렬 (점수가 높은 순)
                 rankings.sort((a, b) => b.score - a.score);
 
                 if (rankings.length === 0) {
@@ -933,12 +953,10 @@
                     return;
                 }
 
-                // 상위 50명만 표시
                 rankings.slice(0, 50).forEach((data, index) => {
                     const li = document.createElement('li');
                     li.className = 'rank-item';
                     
-                    // 날짜 포맷 (선택사항)
                     const dateObj = new Date(data.date);
                     const dateStr = `${dateObj.getMonth()+1}/${dateObj.getDate()}`;
 
