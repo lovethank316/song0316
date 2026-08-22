@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>섭리 명곡 맞추기</title>
+    
+    <!-- 🌟 브라우저 탭 아이콘(파비콘) 설정 -->
+    <link rel="icon" href="favicon.png" type="image/png">
+    
     <style>
         /* 기본 스타일 */
         :root {
@@ -20,6 +24,7 @@
             align-items: center;
             min-height: 100vh;
         }
+        
         .container {
             width: 100%;
             max-width: 500px;
@@ -27,7 +32,9 @@
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             padding: 24px;
+            position: relative; /* 🌟 알림창(토스트)의 위치 기준점이 됩니다 */
         }
+        
         .screen { display: none; }
         .screen.active { display: block; }
         
@@ -56,7 +63,6 @@
             box-sizing: border-box;
         }
 
-        /* 남은 시간 & 맞춘 개수 디자인 */
         .status-box {
             display: flex;
             justify-content: space-between;
@@ -82,7 +88,6 @@
             margin-top: 4px;
         }
 
-        /* 정답 입력창 디자인 */
         .input-area {
             display: flex;
             gap: 10px;
@@ -109,7 +114,25 @@
             font-size: 16px;
         }
 
-        /* 📚 공부하기 방 플레이리스트 스타일 */
+        /* 🌟 위치가 수정된 토스트 알림 (컨테이너 중앙 배치) */
+        .toast {
+            display: none;
+            position: absolute; /* container를 기준으로 위치 잡음 */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            z-index: 1000;
+            text-align: center;
+            font-size: 15px;
+            width: 80%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            pointer-events: none; /* 클릭 방해 금지 (마우스가 통과함) */
+        }
+
         .study-list {
             max-height: 300px;
             overflow-y: auto;
@@ -131,22 +154,6 @@
         .study-list li:hover { background-color: #e0e7ff; }
         .study-list li.playing { background-color: #c7d2fe; font-weight: bold; color: #3730a3; }
 
-        /* 토스트 알림 */
-        .toast {
-            display: none;
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            z-index: 1000;
-            text-align: center;
-        }
-
-        /* 랭킹 리스트 및 버튼 스타일 */
         .rank-list {
             list-style: none;
             padding: 0;
@@ -157,17 +164,17 @@
         .rank-item {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 12px;
             border-bottom: 1px solid #eee;
             background: #f9fafb;
             margin-bottom: 5px;
             border-radius: 6px;
         }
-        .rank-item:nth-child(1) { background: #fef08a; font-weight: bold; } /* 1등 금색 */
-        .rank-item:nth-child(2) { background: #e2e8f0; font-weight: bold; } /* 2등 은색 */
-        .rank-item:nth-child(3) { background: #fed7aa; font-weight: bold; } /* 3등 동색 */
+        .rank-item:nth-child(1) { background: #fef08a; } 
+        .rank-item:nth-child(2) { background: #e2e8f0; } 
+        .rank-item:nth-child(3) { background: #fed7aa; } 
         
-        /* 랭킹 탭 버튼들 */
         .rank-tabs {
             display: flex;
             gap: 5px;
@@ -185,12 +192,66 @@
             background-color: var(--primary);
             color: white;
         }
+        .time-highlight {
+            font-size: 1.3em;
+            font-weight: 900;
+            color: var(--primary);
+        }
+
+        /* 🌟 팝업 안내창 스타일 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px 25px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 320px;
+            width: 85%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .close-x-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #666;
+            cursor: pointer;
+        }
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
+
+    <!-- 🌟 사이트 이전 안내 팝업창 -->
+    <div id="noticeModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <button id="closeNoticeX" class="close-x-btn">✖</button>
+            <h2 style="margin-top: 10px; color: #4f46e5;">📢 공지사항</h2>
+            <p style="font-size: 15px; line-height: 1.5; color: #333; margin: 20px 0;">
+                7일 뒤 사이트 주소가<br>
+                <strong style="color: #ef4444; font-size: 16px;">konhe.github.io/song0316</strong><br>
+                으로 바뀝니다.
+            </p>
+            <button id="hideTodayBtn" class="btn btn-sub" style="font-size: 14px; margin-bottom: 0;">오늘 하루 안 보기</button>
+        </div>
+    </div>
+
     <div class="container">
         <!-- 1. 메인 메뉴 화면 -->
         <div id="startScreen" class="screen active">
@@ -227,11 +288,12 @@
                 <h2>🎵 섭리 명곡 맞추기</h2>
             </div>
             
+            <!-- 토스트 메시지가 컨테이너 안으로 들어왔습니다 -->
             <div id="toastMessage" class="toast"></div>
 
             <div class="status-box">
                 <div class="status-item">
-                    남은 시간
+                    <span id="timerLabel">남은 시간</span>
                     <span id="timer" class="status-value">0</span>
                 </div>
                 <div class="status-item">
@@ -279,11 +341,10 @@
             <button id="backToStartBtn" class="btn btn-secondary">메인 메뉴로</button>
         </div>
 
-        <!-- 4. 명예의 전당 (랭킹) 화면 (버튼 형태로 수정) -->
+        <!-- 4. 명예의 전당 화면 -->
         <div id="rankScreen" class="screen">
             <h2 style="text-align: center; margin-bottom: 15px;">🏆 명예의 전당</h2>
             
-            <!-- 셀렉트 박스 대신 버튼 그룹 사용 -->
             <div class="rank-tabs">
                 <button class="btn btn-sub rank-time-btn active" data-time="60">1분</button>
                 <button class="btn btn-sub rank-time-btn" data-time="180">3분</button>
@@ -292,9 +353,7 @@
                 <button class="btn btn-sub rank-time-btn" data-time="unlimited">무제한</button>
             </div>
 
-            <ul id="rankList" class="rank-list">
-                <!-- 랭킹 데이터가 여기에 표시됩니다 -->
-            </ul>
+            <ul id="rankList" class="rank-list"></ul>
 
             <button id="closeRankBtn" class="btn btn-secondary" style="margin-top: 15px;">메인 메뉴로 돌아가기</button>
         </div>
@@ -313,10 +372,33 @@
     </div>
 
     <script>
-        /* ==========================================
-           1. 노래 목록 (기존에 작성하신 playlist 배열을 여기에 넣어주세요)
-        ========================================== */
-        const playlist = [
+        // 🌟 1. 팝업 공지창 로직
+        const noticeModal = document.getElementById('noticeModal');
+        const closeNoticeX = document.getElementById('closeNoticeX');
+        const hideTodayBtn = document.getElementById('hideTodayBtn');
+        
+        // 기기의 오늘 날짜를 가져옵니다 (예: "2026. 8. 22.")
+        const todayString = new Date().toLocaleDateString();
+
+        // 저장된 날짜가 오늘 날짜와 다르면(또는 없으면) 팝업을 띄웁니다.
+        if (localStorage.getItem('hideSongNoticeDate') !== todayString) {
+            noticeModal.style.display = 'flex';
+        }
+
+        // 'X' 버튼을 누르면 그냥 닫습니다. (새로고침하면 다시 나옴)
+        closeNoticeX.addEventListener('click', () => {
+            noticeModal.style.display = 'none';
+        });
+
+        // '오늘 하루 안 보기'를 누르면 로컬 스토리지에 오늘 날짜를 저장하고 닫습니다.
+        hideTodayBtn.addEventListener('click', () => {
+            localStorage.setItem('hideSongNoticeDate', todayString);
+            noticeModal.style.display = 'none';
+        });
+
+
+        // 기존 게임 로직 (playlist 그대로 유지)
+            const playlist = [
         // --- Part 1 ---
   { title: "My Way remix", src: "part1/My Way remix.mp3" },
   { title: "My way", src: "part1/My way.mp3" },
@@ -686,9 +768,6 @@
   { title: "휴거는 사랑이다", src: "part5/휴거는 사랑이다.mp3" },
 ];
 
-        /* ==========================================
-           2. Firebase 설정
-        ========================================== */
         const firebaseConfig = {
             apiKey: "AIzaSyBCGLZrV-Tkm66ZjA36WtHCC5RPcglp3iE",
             authDomain: "song0316-d3881.firebaseapp.com",
@@ -701,11 +780,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        /* ==========================================
-           3. 전역 변수 및 게임 상태, 효과음 셋팅
-        ========================================== */
         let audio = new Audio();
-        
         const correctSfx = new Audio('correct.mp3');
         const wrongSfx = new Audio('wrong.mp3');
 
@@ -716,12 +791,9 @@
         let timeLeft = 0;
         let isUnlimited = false;
         let currentTimeMode = "60"; 
-
+        let unlimitedElapsed = 0; 
         let lastEmptySubmitTime = 0; 
 
-        /* ==========================================
-           4. 화면 전환 및 유틸 함수
-        ========================================== */
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
@@ -732,28 +804,21 @@
             toast.textContent = message;
             toast.style.display = 'block';
             toast.style.opacity = '1';
-            
             setTimeout(() => {
                 let fadeEffect = setInterval(() => {
                     if (!toast.style.opacity) { toast.style.opacity = 1; }
-                    if (toast.style.opacity > 0) {
-                        toast.style.opacity -= 0.1;
-                    } else {
-                        clearInterval(fadeEffect);
-                        toast.style.display = 'none';
-                    }
+                    if (toast.style.opacity > 0) { toast.style.opacity -= 0.1; } 
+                    else { clearInterval(fadeEffect); toast.style.display = 'none'; }
                 }, 50);
             }, 1500);
         }
 
-        /* ==========================================
-           5. 메인 게임 로직
-        ========================================== */
         document.getElementById('startBtn').addEventListener('click', () => {
             const timeValue = document.getElementById('timeSelect').value;
             currentTimeMode = timeValue; 
             isUnlimited = (timeValue === 'unlimited');
             timeLeft = isUnlimited ? 0 : parseInt(timeValue);
+            unlimitedElapsed = 0;
             
             score = 0;
             currentSongIndex = 0;
@@ -763,9 +828,11 @@
             document.getElementById('answerInput').value = '';
             
             if (isUnlimited) {
-                document.getElementById('timer').textContent = '무제한';
+                document.getElementById('timerLabel').textContent = '진행 시간';
+                document.getElementById('timer').textContent = '0분 0초';
                 document.getElementById('stopUnlimitedBtn').style.display = 'block';
             } else {
+                document.getElementById('timerLabel').textContent = '남은 시간';
                 document.getElementById('timer').textContent = timeLeft;
                 document.getElementById('stopUnlimitedBtn').style.display = 'none';
             }
@@ -775,13 +842,18 @@
             playNextSong();
 
             clearInterval(timerInterval);
-            if (!isUnlimited) {
-                timerInterval = setInterval(() => {
+            timerInterval = setInterval(() => {
+                if (isUnlimited) {
+                    unlimitedElapsed++;
+                    const m = Math.floor(unlimitedElapsed / 60);
+                    const s = unlimitedElapsed % 60;
+                    document.getElementById('timer').textContent = `${m}분 ${s}초`;
+                } else {
                     timeLeft--;
                     document.getElementById('timer').textContent = timeLeft;
                     if (timeLeft <= 0) endGame();
-                }, 1000);
-            }
+                }
+            }, 1000);
         });
 
         function playNextSong() {
@@ -813,15 +885,10 @@
                 const now = Date.now();
                 if (now - lastEmptySubmitTime < 500) { 
                     showToast("패스! 정답은 [" + originalTitle + "] 입니다.");
-                    wrongSfx.currentTime = 0;
-                    wrongSfx.play(); 
-                    
-                    currentSongIndex++;
-                    playNextSong();
-                    lastEmptySubmitTime = 0; 
+                    wrongSfx.currentTime = 0; wrongSfx.play(); 
+                    currentSongIndex++; playNextSong(); lastEmptySubmitTime = 0; 
                 } else {
-                    showToast("한 번 더 누르면 패스됩니다.");
-                    lastEmptySubmitTime = now;
+                    showToast("한 번 더 누르면 패스됩니다."); lastEmptySubmitTime = now;
                 }
                 return;
             }
@@ -830,20 +897,12 @@
                 score++;
                 document.getElementById('score').textContent = score;
                 showToast("정답입니다! 🎉");
-                correctSfx.currentTime = 0;
-                correctSfx.play();
-                
-                answerInput.value = '';
-                lastEmptySubmitTime = 0;
-                currentSongIndex++;
-                playNextSong();
+                correctSfx.currentTime = 0; correctSfx.play();
+                answerInput.value = ''; lastEmptySubmitTime = 0; currentSongIndex++; playNextSong();
             } else {
                 showToast("틀렸습니다. 다시 시도해보세요!");
-                wrongSfx.currentTime = 0;
-                wrongSfx.play();
-                
-                answerInput.value = ''; 
-                lastEmptySubmitTime = Date.now();
+                wrongSfx.currentTime = 0; wrongSfx.play();
+                answerInput.value = ''; lastEmptySubmitTime = Date.now();
             }
         }
 
@@ -855,7 +914,15 @@
         function endGame() {
             clearInterval(timerInterval);
             audio.pause();
-            document.getElementById('finalScore').textContent = `최종 점수: ${score}점`;
+            
+            let timeText = "";
+            if (isUnlimited) {
+                const m = Math.floor(unlimitedElapsed / 60);
+                const s = unlimitedElapsed % 60;
+                timeText = `<div style="font-size:16px; color:#64748b; margin-top:5px;">(소요 시간: ${m}분 ${s}초)</div>`;
+            }
+            
+            document.getElementById('finalScore').innerHTML = `최종 점수: ${score}점 ${timeText}`;
             document.getElementById('playerName').value = ''; 
             showScreen('resultsScreen');
         }
@@ -890,47 +957,37 @@
             document.getElementById('hintBox').textContent = "💡 " + hint;
         });
 
-        /* ==========================================
-           6. 명예의 전당 (버튼 탭 형식 적용)
-        ========================================== */
+        // 명예의 전당 로직
         document.getElementById('saveScoreBtn').addEventListener('click', () => {
             const name = document.getElementById('playerName').value.trim();
-            if (!name) {
-                alert("이름을 입력해주세요!");
-                return;
-            }
-            db.ref('rankings/' + currentTimeMode).push({
+            if (!name) { alert("이름을 입력해주세요!"); return; }
+            
+            const dataToSave = {
                 name: name,
                 score: score,
                 date: new Date().toISOString()
-            }).then(() => {
+            };
+            if (isUnlimited) dataToSave.timeSpent = unlimitedElapsed;
+
+            db.ref('rankings/' + currentTimeMode).push(dataToSave).then(() => {
                 alert("등록되었습니다!");
                 showScreen('startScreen');
-            }).catch(error => {
-                alert("오류가 발생했습니다: " + error.message);
-            });
+            }).catch(error => alert("오류가 발생했습니다: " + error.message));
         });
 
         document.getElementById('viewRankBtn').addEventListener('click', () => {
             showScreen('rankScreen');
-            // 진입 시 기본으로 1분 모드(60) 선택 표시
             document.querySelectorAll('.rank-time-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('.rank-time-btn[data-time="60"]').classList.add('active');
             loadRankings('60'); 
         });
-
         document.getElementById('closeRankBtn').addEventListener('click', () => showScreen('startScreen'));
 
-        // 버튼 클릭 이벤트 리스너 추가
         document.querySelectorAll('.rank-time-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                // 클릭한 버튼 활성화 스타일 변경
                 document.querySelectorAll('.rank-time-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
-                
-                // 해당 시간 데이터 불러오기
-                const timeLimit = e.target.getAttribute('data-time');
-                loadRankings(timeLimit);
+                loadRankings(e.target.getAttribute('data-time'));
             });
         });
 
@@ -938,18 +995,20 @@
             const rankListUl = document.getElementById('rankList');
             rankListUl.innerHTML = '<li style="text-align:center;">데이터를 불러오는 중입니다...</li>';
 
-            db.ref('rankings/' + timeLimit).orderByChild('score').once('value', snapshot => {
+            db.ref('rankings/' + timeLimit).once('value', snapshot => {
                 rankListUl.innerHTML = ''; 
                 const rankings = [];
-                
-                snapshot.forEach(child => {
-                    rankings.push(child.val());
+                snapshot.forEach(child => { rankings.push(child.val()); });
+
+                rankings.sort((a, b) => {
+                    if (b.score === a.score && timeLimit === 'unlimited') {
+                        return (a.timeSpent || Infinity) - (b.timeSpent || Infinity);
+                    }
+                    return b.score - a.score;
                 });
 
-                rankings.sort((a, b) => b.score - a.score);
-
                 if (rankings.length === 0) {
-                    rankListUl.innerHTML = '<li style="text-align:center;">아직 등록된 기록이 없습니다.</li>';
+                    rankListUl.innerHTML = '<li style="text-align:center; padding: 20px;">아직 등록된 기록이 없습니다.</li>';
                     return;
                 }
 
@@ -959,19 +1018,32 @@
                     
                     const dateObj = new Date(data.date);
                     const dateStr = `${dateObj.getMonth()+1}/${dateObj.getDate()}`;
+                    
+                    let timeHTML = '';
+                    if (timeLimit === 'unlimited' && data.timeSpent != null) {
+                        const m = Math.floor(data.timeSpent / 60);
+                        const s = data.timeSpent % 60;
+                        timeHTML = `<div style="font-size: 13px; color: #64748b; margin-top: 4px;">
+                            소요 시간: <span class="time-highlight">${m}</span>분 <span class="time-highlight">${s}</span>초
+                        </div>`;
+                    }
 
                     li.innerHTML = `
-                        <span><strong>${index + 1}위</strong>. ${data.name}</span>
-                        <span>${data.score}점 <small style="color:#888;">(${dateStr})</small></span>
+                        <div style="display:flex; flex-direction:column;">
+                            <span><strong>${index + 1}위</strong>. ${data.name}</span>
+                            ${timeHTML}
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-weight:bold; font-size:16px;">${data.score}점</div>
+                            <div style="font-size:12px; color:#888;">${dateStr}</div>
+                        </div>
                     `;
                     rankListUl.appendChild(li);
                 });
             });
         }
 
-        /* ==========================================
-           7. 📚 공부하기 방 기능
-        ========================================== */
+        // 📚 공부하기 방 기능
         const btnStudy = document.getElementById('btn-study');
         const btnStudyBack = document.getElementById('btn-study-back');
         const studyPlaylistUl = document.getElementById('study-playlist');
