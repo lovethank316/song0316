@@ -447,7 +447,7 @@
 
     <script>
         // 재생목록 (기존 곡 세팅 유지)
-        const playlist = [
+                const playlist = [
         // --- Part 1 ---
   { title: "My Way remix", src: "part1/My Way remix.mp3" },
   { title: "My way", src: "part1/My way.mp3" },
@@ -819,21 +819,167 @@
 
         // Firebase 초기화
         const firebaseConfig = {
-            apiKey: "AIzaSyBCGlZRv-TkM66ZjA36WtHCC5RPcgIp3iE",
-  authDomain: "song0316-d3881.firebaseapp.com",
-  databaseURL: "https://song0316-d3881-default-rtdb.firebaseio.com",
-  projectId: "song0316-d3881",
-  storageBucket: "song0316-d3881.firebasestorage.app",
-  messagingSenderId: "31876563990",
-  appId: "1:31876563990:web:ff5b3faf9cdb75a3b96137"
+            apiKey: "AIzaSyBCGLZrV-Tkm66ZjA36WtHCC5RPcglp3iE",
+            authDomain: "song0316-d3881.firebaseapp.com",
+            databaseURL: "https://song0316-d3881-default-rtdb.firebaseio.com",
+            projectId: "song0316-d3881",
+            storageBucket: "song0316-d3881.firebasestorage.app",
+            messagingSenderId: "31876563990",
+            appId: "1:31876563990:web:ff5b3faf9cdb75a3b96137"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
         const provider = new firebase.auth.GoogleAuthProvider();
         
-        let currentUser = null;
-        let userNickname = "";
+      let currentUser = null;
+let userNickname = "";
+
+// 1번: 게스트 및 로그인 사용자 정보 통합 관리 함수
+function getMyInfo() {
+
+  if (currentUser) {
+    return {
+      uid: currentUser.uid,
+      name: userNickname || currentUser.displayName || '플레이어',
+      isGuest: false
+    };
+  }
+
+  let guestUid = localStorage.getItem('guest_uid');
+  let guestName = localStorage.getItem('guest_name');
+  if (!guestUid) {
+    guestUid = 'guest_' + Math.random().toString(36).substring(2, 9);
+    guestName = '게스트_' + Math.floor(1000 + Math.random() * 9000);
+    localStorage.setItem('guest_uid', guestUid);
+    localStorage.setItem('guest_name', guestName);
+  }
+  return {
+    uid: guestUid,
+    name: guestName,
+    isGuest: true
+  };
+}
+
+// 2. 방 만들기 (게스트 지원)
+async function createBattleRoom() {
+  const myInfo = getMyInfo();
+  const title = document.getElementById('battle-room-title').value.trim();
+  const isPublic = document.getElementById('battle-room-public').checked;
+
+  if (!title) return alert("방 이름을 입력해 주세요.");
+
+  const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const roomRef = db.ref('rooms/' + roomCode);
+
+  await roomRef.set({
+    code: roomCode,
+    title: title,
+    isPublic: isPublic,
+    hostUid: myInfo.uid,
+    status: 'waiting',
+    settings: { difficulty: 'normal', time: '60' },
+    players: {
+      [myInfo.uid]: { name: myInfo.name, isHost: true }
+    }
+  });
+
+  enterWaitingRoom(roomCode);
+}
+
+// 3. 방 입장 (게스트 지원)
+async function joinRoom(code) {
+  const myInfo = getMyInfo();
+  const roomRef = db.ref('rooms/' + code);
+  const snapshot = await roomRef.once('value');
+  const room = snapshot.val();
+
+  if (!room) return alert("존재하지 않는 방 코드입니다.");
+  if (room.status !== 'waiting') return alert("이미 시작된 방입니다.");
+
+  await roomRef.child('players/' + myInfo.uid).set({
+    name: myInfo.name,
+    isHost: false
+  });
+
+  enterWaitingRoom(code);
+}
+
+// 4. 대기실 진입 및 동기화 (게스트 지원)
+function enterWaitingRoom(code) {
+  currentRoomCode = code;
+  const myInfo = getMyInfo();
+
+  hideAllScreens();
+  document.getElementById('screen-room-waiting').classList.remove('hidden');
+
+  document.getElementById('lobby-my-name').innerText = myInfo.name;
+  document.getElementById('room-link-input').value = `${window.location.origin}${window.location.pathname}?room=${code}`;
+
+  const roomRef = db.ref('rooms/' + code);
+  if (roomListener) roomRef.off('value', roomListener);
+
+  roomListener = roomRef.on('value', (snapshot) => {
+    const room = snapshot.val();
+    if (!room) {
+      alert("방이 삭제되었습니다.");
+      leaveRoom();
+      return;
+    }
+
+    document.getElementById('waiting-room-title').innerText = room.title;
+    document.getElementById('waiting-room-code').innerText = room.code;
+
+    isHostUser = (room.hostUid === myInfo.uid);
+    document.getElementById('badge-host-status').innerText = isHostUser ? "방장" : "참가자";
+    document.getElementById('badge-public-status').innerText = room.isPublic ? "공개" : "비공개";
+
+    const playerList = document.getElementById('player-list');
+    playerList.innerHTML = '';
+    const players = room.players || {};
+    const playerKeys = Object.keys(players);
+    document.getElementById('player-count').innerText = playerKeys.length;
+
+    playerKeys.forEach(uid => {
+      const p = players[uid];
+      const chip = document.createElement('div');
+      chip.className = `player-chip ${p.isHost ? 'host' : ''}`;
+      chip.innerText = `${p.isHost ? '👑 ' : ''}${p.name}`;
+      playerList.appendChild(chip);
+    });
+
+    if (room.settings) {
+      updateSettingUI('difficulty', room.settings.difficulty || 'normal');
+      updateSettingUI('time', room.settings.time || '60');
+    }
+
+    const startBtn = document.getElementById('btn-start-game');
+    if (!isHostUser) {
+      startBtn.disabled = true;
+      startBtn.innerText = "방장의 시작을 기다리는 중...";
+      document.querySelectorAll('.btn-opt').forEach(btn => btn.disabled = true);
+    } else {
+      startBtn.disabled = false;
+      startBtn.innerText = "게임 시작";
+      document.querySelectorAll('.btn-opt').forEach(btn => btn.disabled = false);
+    }
+  });
+}
+
+// 5. 방 나가기 (게스트 지원)
+function leaveRoom() {
+  const myInfo = getMyInfo();
+  if (currentRoomCode) {
+    db.ref(`rooms/${currentRoomCode}/players/${myInfo.uid}`).remove();
+    if (roomListener) db.ref(`rooms/${currentRoomCode}`).off('value', roomListener);
+  }
+  currentRoomCode = null;
+  hideAllScreens();
+  document.getElementById('screen-battle').classList.remove('hidden');
+  loadPublicRooms();
+}
+
+// 🌟 토글 버튼(선택지) 작동 로직
 
         // 🌟 토글 버튼(선택지) 작동 로직
         let selectedMode = 'normal';
