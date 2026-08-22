@@ -388,6 +388,7 @@
                 <button id="pauseBtn" class="btn btn-sub" style="border-radius: 10px;">⏸️ 일시정지</button>
                 <button id="play30Btn" class="btn btn-sub" style="border-radius: 10px;">▶️ 30초 듣기</button>
                 <button id="btn-middle-listen" class="btn btn-sub" style="border-radius: 10px;">🎧 중간 10초 듣기</button>
+
             </div>
 
             <button id="hintBtn" class="btn btn-sub" style="border-radius: 10px; border: 1px solid #cbd5e1; background: white;">💡 초성 힌트 보기</button>
@@ -447,6 +448,7 @@
 
     <script>
         // 재생목록 (기존 곡 세팅 유지)
+        const playlist = [
                const playlist = [
         // --- Part 1 ---
   { title: "My Way remix", src: "part1/My Way remix.mp3" },
@@ -817,7 +819,6 @@
   { title: "휴거는 사랑이다", src: "part5/휴거는 사랑이다.mp3" },
 ];
 
-
         // Firebase 초기화
         const firebaseConfig = {
             apiKey: "AIzaSyBCGlZRv-TkM66ZjA36WtHCC5RPcgIp3iE",
@@ -835,6 +836,68 @@
         
       let currentUser = null;
 let userNickname = "";
+<script>
+  // 재생목록
+  const playlist = [ ... ];
+
+  // Firebase 초기화
+  ...
+  let currentUser = null;
+  let userNickname = "";
+
+  // -------------------------------------------------------------
+  // 👇 여기에 첫 번째 코드를 붙여넣으세요!
+  // -------------------------------------------------------------
+  let currentAudio = new Audio();
+  let playStart = 0;
+  let playEnd = 5;
+
+  // 오디오 재생 구간 자동 감지 및 중지
+  currentAudio.ontimeupdate = () => {
+    if (currentAudio.currentTime >= playEnd) {
+      currentAudio.pause();
+    }
+  };
+
+  // 1) 신규 문제 시작 시: 첫 5초만 재생
+  function loadAndPlay5Sec(audioSrc) {
+    currentAudio.pause();
+    currentAudio.src = audioSrc;
+    playStart = 0;
+    playEnd = 5;
+    currentAudio.currentTime = 0;
+    currentAudio.play();
+  }
+
+  // 2) 5초 상태에서 다시 재생 버튼 클릭 시: 처음 5초(0~5초) 재재생
+  function replay5Sec() {
+    playStart = 0;
+    playEnd = 5;
+    currentAudio.currentTime = 0;
+    currentAudio.play();
+  }
+
+  // 3) 30초 듣기 버튼 클릭 시: 5초 지점부터 30초까지 이어서 재생
+  function play30SecHint() {
+    playStart = 5;
+    playEnd = 30;
+    currentAudio.currentTime = 5;
+    currentAudio.play();
+  }
+
+  // 4) 중간 10초 듣기 버튼 클릭 시: 곡 전체의 정확한 중앙 10초 구간 재생
+  function playMiddle10SecHint() {
+    if (!currentAudio.duration || isNaN(currentAudio.duration)) return;
+    
+    const totalDuration = currentAudio.duration;
+    const midStart = Math.max(0, (totalDuration - 10) / 2);
+    
+    playStart = midStart;
+    playEnd = midStart + 10;
+    currentAudio.currentTime = midStart;
+    currentAudio.play();
+  }
+  // -------------------------------------------------------------
 
 // 1번: 게스트 및 로그인 사용자 정보 통합 관리 함수
 function getMyInfo() {
