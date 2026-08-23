@@ -1269,14 +1269,38 @@ function loadRankings(timeLimit) {
   const listEasy = document.getElementById('ranking-list-easy');
   const singleRankList = document.getElementById('rankList');
 
+  // 탭 버튼 요소 가져오기
+  const tabNormalBtn = document.getElementById('tab-normal');
+  const tabEasyBtn = document.getElementById('tab-easy');
+
   if (timeLimit === '60') {
     // 60초일 때: 탭 상자 보이기, 단일 리스트 숨기기
     if (tabsContainer) tabsContainer.style.display = 'flex';
     if (singleRankList) singleRankList.style.display = 'none';
 
-    // 기본값: 일반모드 리스트만 보여주고 쉬운모드 리스트는 숨김
+    // 기본 상태: 처음 창을 열면 일반모드 리스트만 보이기
     if (listNormal) listNormal.style.display = 'block';
     if (listEasy) listEasy.style.display = 'none';
+
+    // 일반모드 / 쉬운모드 버튼 클릭 시 화면 전환
+    if (tabNormalBtn && tabEasyBtn) {
+      tabNormalBtn.onclick = function() {
+        listNormal.style.display = 'block';
+        listEasy.style.display = 'none';
+        tabNormalBtn.style.backgroundColor = '#1d4ed8';
+        tabNormalBtn.style.color = '#fff';
+        tabEasyBtn.style.backgroundColor = 'transparent';
+        tabEasyBtn.style.color = '#64748b';
+      };
+      tabEasyBtn.onclick = function() {
+        listNormal.style.display = 'none';
+        listEasy.style.display = 'block';
+        tabEasyBtn.style.backgroundColor = '#1d4ed8';
+        tabEasyBtn.style.color = '#fff';
+        tabNormalBtn.style.backgroundColor = 'transparent';
+        tabNormalBtn.style.color = '#64748b';
+      };
+    }
 
     // 각각 독립된 DB 경로에서 불러오기
     fetchAndRenderRankings('60_normal', 'ranking-list-normal');
@@ -1309,14 +1333,12 @@ function fetchAndRenderRankings(pathKey, targetElementId) {
       return;
     }
 
-    // 유저별 최고 기록 추출
     const userBestScores = {};
     rawRankings.forEach(data => {
       const userId = data.uid || data.name;
       if (!userBestScores[userId]) {
         userBestScores[userId] = data;
       } else {
-        // 최고 점수 갱신 (무제한 모드는 동점 시 소요시간이 짧은 기록 갱신)
         if (data.score > userBestScores[userId].score) {
           userBestScores[userId] = data;
         } else if (data.score === userBestScores[userId].score && pathKey === 'unlimited') {
@@ -1327,7 +1349,6 @@ function fetchAndRenderRankings(pathKey, targetElementId) {
       }
     });
 
-    // 점수 내림차순 정렬 (무제한 모드는 동점 시 소요시간 빠른 순)
     const sortedRankings = Object.values(userBestScores).sort((a, b) => {
       if (b.score === a.score && pathKey === 'unlimited') {
         return (a.timeSpent || Infinity) - (b.timeSpent || Infinity);
@@ -1335,13 +1356,11 @@ function fetchAndRenderRankings(pathKey, targetElementId) {
       return b.score - a.score;
     });
 
-    // 랭킹 HTML 출력
     sortedRankings.slice(0, 50).forEach((data, index) => {
       const li = document.createElement('li');
       li.className = 'rank-item';
       if (index === 0) li.classList.add('rank-1');
 
-      // 무제한 모드 소요시간 텍스트 생성
       let timeHTML = '';
       if (pathKey === 'unlimited' && data.timeSpent != null) {
         const m = Math.floor(data.timeSpent / 60);
@@ -1355,7 +1374,7 @@ function fetchAndRenderRankings(pathKey, targetElementId) {
       li.innerHTML = `
         <div style="display:flex; align-items:center; gap: 12px;">
           <div style="font-weight:900; font-size:18px; color: var(--primary, #1d4ed8); width:25px; text-align:center;">${index + 1}</div>
-          <img src="${photoSrc}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-shrink: 0;" alt="profile">
+          <img src="${photoSrc}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid white; flex-shrink: 0;" alt="profile">
           <div style="display:flex; flex-direction:column; text-align:left;">
             <span style="font-size: 15px; font-weight: bold; color:var(--text-dark, #1e293b);">${data.name}</span>
             ${timeHTML}
