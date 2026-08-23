@@ -1239,10 +1239,16 @@
             };
             if (isUnlimited) dataToSave.timeSpent = unlimitedElapsed;
 
-            db.ref('rankings/' + selectedTime).push(dataToSave).then(() => {
-                alert("명예의 전당에 성공적으로 등록되었습니다! 🏆");
-                showScreen('startScreen');
-            }).catch(error => alert("오류가 발생했습니다: " + error.message));
+         // 60초 제한시간일 때는 쉬운모드/일반모드 저장 경로 분리
+let savePath = 'rankings/' + selectedTime;
+if (selectedTime === '60') {
+  savePath = isEasyMode ? 'rankings/60_easy' : 'rankings/60_normal';
+}
+
+db.ref(savePath).push(dataToSave).then(() => {
+  alert("명예의 전당에 성공적으로 등록되었습니다! 🏆");
+  showScreen('startScreen');
+}).catch(error => alert("오류가 발생했습니다: " + error.message));
         });
 
         // 🌟 랭킹 보기 및 탭 전환
@@ -1256,73 +1262,81 @@
 
         setupToggleGroup('rankTimeGroup', (timeLimit) => loadRankings(timeLimit));
 
-        function loadRankings(timeLimit) {
-            const rankListUl = document.getElementById('rankList');
-            rankListUl.innerHTML = '<li style="text-align:center; color:#64748b;">데이터를 불러오는 중입니다...</li>';
+     function loadRankings(timeLimit) {
+  const tabsContainer = document.getElementById('60s-tabs');
+  const tabNormal = document.getElementById('tab-normal');
+  const tabEasy = document.getElementById('tab-easy');
+  const singleRankList = document.getElementById('rankList');
 
-            db.ref('rankings/' + timeLimit).once('value', snapshot => {
-                rankListUl.innerHTML = ''; 
-                const rawRankings = [];
-                snapshot.forEach(child => { rawRankings.push(child.val()); });
+  if (timeLimit === '60') {
+    // 60초일 때: 탭 화면 보이기, 기존 단일 리스트 숨기기
+    if (tabsContainer) tabsContainer.style.display = 'flex';
+    if (tabNormal) tabNormal.style.display = 'block';
+    if (tabEasy) tabEasy.style.display = 'block';
+    if (singleRankList) singleRankList.style.display = 'none';
 
-                // 🌟 한 계정(UID 기준)의 최고 기록만 남기기
-                const userBestScores = {};
-                rawRankings.forEach(data => {
-                    const userId = data.uid || data.name; // uid가 없는 구 버전 데이터는 닉네임으로 구분
-                    if (!userBestScores[userId]) {
-                        userBestScores[userId] = data;
-                    } else {
-                        // 더 높은 점수이거나 (무제한 모드인 경우) 점수는 같지만 시간이 짧으면 갱신
-                        if (data.score > userBestScores[userId].score) {
-                            userBestScores[userId] = data;
-                        } else if (data.score === userBestScores[userId].score && timeLimit === 'unlimited') {
-                            if ((data.timeSpent || Infinity) < (userBestScores[userId].timeSpent || Infinity)) {
-                                userBestScores[userId] = data;
-                            }
-                        }
-                    }
-                });
+    // 일반모드 / 쉬운모드 각각 데이터 불러오기
+    fetchAndRenderRankings('60_normal', 'ranking-list-normal');
+    fetchAndRenderRankings('60_easy', 'ranking-list-easy');
+  } else {
+    // 다른 제한시간일 때: 탭 숨기고 단일 리스트만 표시
+    if (tabsContainer) tabsContainer.style.display = 'none';
+    if (tabNormal) tabNormal.style.display = 'none';
+    if (tabEasy) tabEasy.style.display = 'none';
+    if (singleRankList) singleRankList.style.display = 'block';
 
-                const rankings = Object.values(userBestScores);
+    fetchAndRenderRankings(timeLimit, 'rankList');
+  }
+}
 
-                rankings.sort((a, b) => {
-                    if (b.score === a.score && timeLimit === 'unlimited') return (a.timeSpent || Infinity) - (b.timeSpent || Infinity);
-                    return b.score - a.score;
-                });
+// 모드별 데이터를 가져와 목록을 만들어주는 공통 함수
+function fetchAndRenderRankings(pathKey, targetElementId) {
+  const targetUl = document.getElementById(targetElementId);
+  if (!targetUl) return;
 
-                if (rankings.length === 0) { rankListUl.innerHTML = '<li style="text-align:center; padding: 20px; color:#64748b;">아직 등록된 기록이 없습니다.</li>'; return; }
+  targetUl.innerHTML = '<li style="text-align:center; color:#64748b; padding: 15px;">랭킹을 불러오는 중...</li>';
 
-                rankings.slice(0, 50).forEach((data, index) => {
-                    const li = document.createElement('li');
-                    li.className = 'rank-item';
-                    const dateObj = new Date(data.date);
-                    const dateStr = `${dateObj.getMonth()+1}/${dateObj.getDate()}`;
-                    
-                    let timeHTML = '';
-                    if (timeLimit === 'unlimited' && data.timeSpent != null) {
-                        const m = Math.floor(data.timeSpent / 60); const s = data.timeSpent % 60;
-                        timeHTML = `<div style="font-size: 12px; color: #64748b; margin-top: 2px;">소요 시간: <strong style="color:var(--primary);">${m}분 ${s}초</strong></div>`;
-                    }
-                    const photoSrc = data.photo ? data.photo : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
+  db.ref('rankings/' + pathKey).once('value', snapshot => {
+    targetUl.innerHTML = '';
+    const rawRankings = [];
+    snapshot.forEach(child => { rawRankings.push(child.val()); });
 
-                    li.innerHTML = `
-                        <div style="display:flex; align-items:center; gap: 12px;">
-                            <div style="font-weight:900; font-size:18px; color: var(--primary); width:25px; text-align:center;">${index + 1}</div>
-                            <img src="${photoSrc}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                            <div style="display:flex; flex-direction:column; text-align:left;">
-                                <span style="font-size: 15px; color:var(--text-dark);"><strong>${data.name}</strong></span>
-                                ${timeHTML}
-                            </div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="font-weight:900; font-size:18px; color: var(--text-dark);">${data.score}점</div>
-                            <div style="font-size:12px; color:#94a3b8;">${dateStr}</div>
-                        </div>
-                    `;
-                    rankListUl.appendChild(li);
-                });
-            });
-        }
+    if (rawRankings.length === 0) {
+      targetUl.innerHTML = '<li style="text-align:center; color:#94a3b8; padding: 15px;">등록된 기록이 없습니다.</li>';
+      return;
+    }
+
+    // 최고 기록만 남기기 (UID 또는 이름 기준)
+    const userBestScores = {};
+    rawRankings.forEach(data => {
+      const userId = data.uid || data.name;
+      if (!userBestScores[userId] || data.score > userBestScores[userId].score) {
+        userBestScores[userId] = data;
+      }
+    });
+
+    // 점수 내림차순 정렬
+    const sortedRankings = Object.values(userBestScores).sort((a, b) => b.score - a.score);
+
+    // 랭킹 HTML 생성
+    sortedRankings.forEach((data, index) => {
+      const li = document.createElement('li');
+      li.className = 'rank-item';
+      if (index === 0) li.classList.add('rank-1');
+      
+      const photoSrc = data.photo || 'https://via.placeholder.com/40';
+      const formattedDate = data.date ? new Date(data.date).toLocaleDateString() : '';
+
+      li.innerHTML = `
+        <span class="rank-num">${index + 1}</span>
+        <img src="${photoSrc}" class="rank-profile-img" alt="profile">
+        <span class="rank-name">${data.name}</span>
+        <span class="rank-score">${data.score}점 <small style="font-size:10px; color:#94a3b8;">${formattedDate}</small></span>
+      `;
+      targetUl.appendChild(li);
+    });
+  });
+}
 
         // 📚 공부하기 방 기능
         const btnStudy = document.getElementById('btn-study');
