@@ -1239,10 +1239,11 @@
             };
             if (isUnlimited) dataToSave.timeSpent = unlimitedElapsed;
 
-         // 60초 제한시간일 때는 쉬운모드/일반모드 저장 경로 분리
+      // 60초 제한시간일 때는 쉬운모드/일반모드 저장 경로 분리 (변수 미선언 에러 방지)
 let savePath = 'rankings/' + selectedTime;
-if (selectedTime === '60') {
-  savePath = isEasyMode ? 'rankings/60_easy' : 'rankings/60_normal';
+if (String(selectedTime) === '60') {
+  const isEasy = (typeof isEasyMode !== 'undefined' && isEasyMode);
+  savePath = isEasy ? 'rankings/60_easy' : 'rankings/60_normal';
 }
 
 db.ref(savePath).push(dataToSave).then(() => {
