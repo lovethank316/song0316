@@ -275,8 +275,62 @@
         .toast { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.85); color: white; padding: 15px 20px; border-radius: 12px; z-index: 1000; text-align: center; font-size: 15px; width: 80%; }
         
         .close-x-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 22px; color: #94a3b8; cursor: pointer; }
+        /* 모드 선택 탭 컨테이너 */
+.mode-tab-container {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+/* 기본 탭 버튼 스타일 */
+.tab-btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* 선택된(Active) 탭 버튼 스타일 */
+.tab-btn.active {
+  background-color: #2563eb;
+  color: white;
+  border-color: #2563eb;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+/* 탭 콘텐츠 숨김/표시 처리 */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
     </style>
-    
+
+    <script>
+    function switchModeTab(mode, btnElement) {
+  // 1. 모든 탭 버튼에서 active 클래스 제거 후, 클릭한 버튼에만 추가
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  btnElement.classList.add('active');
+
+  // 2. 모든 탭 콘텐츠 숨기고, 선택한 모드의 콘텐츠만 표시
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  const targetTab = document.getElementById('tab-' + mode);
+  if (targetTab) {
+    targetTab.classList.add('active');
+  }
+
+  // 3. (필요 시) Firebase에서 해당 모드 랭킹을 불러오는 함수 호출
+  // loadRankingsData(mode);
+}
+        </script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
