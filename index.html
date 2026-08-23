@@ -429,6 +429,23 @@
                 <button class="toggle-btn" data-time="unlimited" style="padding: 8px; font-size: 13px; flex-basis: 100%;">무제한</button>
             </div>
 
+            <!-- 👇 60초 전용 모드 선택 탭 추가 위치 👇 -->
+<div class="mode-tab-container" id="60s-tabs">
+  <button class="tab-btn active" onclick="switchModeTab('normal', this)">일반모드</button>
+  <button class="tab-btn" onclick="switchModeTab('easy', this)">쉬운모드</button>
+</div>
+
+<!-- 일반모드 목록 -->
+<div id="tab-normal" class="tab-content active">
+  <ul id="ranking-list-normal"></ul>
+</div>
+
+<!-- 쉬운모드 목록 -->
+<div id="tab-easy" class="tab-content">
+  <ul id="ranking-list-easy"></ul>
+</div>
+<!-- 👆 여기까지 추가 👆 -->
+            
             <ul id="rankList" class="rank-list"></ul>
             <button id="closeRankBtn" class="btn btn-sub" style="margin-top: 15px;">메인 메뉴로 돌아가기</button>
         </div>
