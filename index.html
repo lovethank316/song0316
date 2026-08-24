@@ -1239,17 +1239,19 @@
             };
             if (isUnlimited) dataToSave.timeSpent = unlimitedElapsed;
 
-      // 60초 제한시간일 때는 쉬운모드/일반모드 저장 경로 분리 (변수 미선언 에러 방지)
-let savePath = 'rankings/' + selectedTime;
-if (String(selectedTime) === '60') {
-  const isEasy = (typeof isEasyMode !== 'undefined' && isEasyMode);
-  savePath = isEasy ? 'rankings/60_easy' : 'rankings/60_normal';
-}
+ // 🛑 쉬운 모드일 경우 저장하지 않고 메인으로 돌아감
+    if (typeof isEasyMode !== 'undefined' && isEasyMode) {
+        alert("👏 수고하셨습니다! (쉬운 모드는 랭킹에 기록되지 않습니다)");
+        showScreen('startScreen');
+        return; // 여기서 멈춤 (데이터베이스에 저장 안 함)
+    }
 
-db.ref(savePath).push(dataToSave).then(() => {
-  alert("명예의 전당에 성공적으로 등록되었습니다! 🏆");
-  showScreen('startScreen');
-}).catch(error => alert("오류가 발생했습니다: " + error.message));
+    // ✅ 일반 모드(또는 다른 시간 모드)일 경우 정상적으로 원래 경로에 저장
+    let savePath = 'rankings/' + selectedTime;
+    db.ref(savePath).push(dataToSave).then(() => {
+        alert("명예의 전당에 성공적으로 등록되었습니다! 🏆");
+        showScreen('startScreen');
+    }).catch(error => alert("오류가 발생했습니다: " + error.message));
         });
 
         // 🌟 랭킹 보기 및 탭 전환
@@ -1264,58 +1266,21 @@ db.ref(savePath).push(dataToSave).then(() => {
         setupToggleGroup('rankTimeGroup', (timeLimit) => loadRankings(timeLimit));
 
 function loadRankings(timeLimit) {
-  const tabsContainer = document.getElementById('60s-tabs');
-  const listNormal = document.getElementById('ranking-list-normal');
-  const listEasy = document.getElementById('ranking-list-easy');
-  const singleRankList = document.getElementById('rankList');
-
-  // 탭 버튼 요소 가져오기
-  const tabNormalBtn = document.getElementById('tab-normal');
-  const tabEasyBtn = document.getElementById('tab-easy');
-
-  if (timeLimit === '60') {
-    // 60초일 때: 탭 상자 보이기, 단일 리스트 숨기기
-    if (tabsContainer) tabsContainer.style.display = 'flex';
-    if (singleRankList) singleRankList.style.display = 'none';
-
-    // 기본 상태: 처음 창을 열면 일반모드 리스트만 보이기
-    if (listNormal) listNormal.style.display = 'block';
-    if (listEasy) listEasy.style.display = 'none';
-
-    // 일반모드 / 쉬운모드 버튼 클릭 시 화면 전환
-    if (tabNormalBtn && tabEasyBtn) {
-      tabNormalBtn.onclick = function() {
-        listNormal.style.display = 'block';
-        listEasy.style.display = 'none';
-        tabNormalBtn.style.backgroundColor = '#1d4ed8';
-        tabNormalBtn.style.color = '#fff';
-        tabEasyBtn.style.backgroundColor = 'transparent';
-        tabEasyBtn.style.color = '#64748b';
-      };
-      tabEasyBtn.onclick = function() {
-        listNormal.style.display = 'none';
-        listEasy.style.display = 'block';
-        tabEasyBtn.style.backgroundColor = '#1d4ed8';
-        tabEasyBtn.style.color = '#fff';
-        tabNormalBtn.style.backgroundColor = 'transparent';
-        tabNormalBtn.style.color = '#64748b';
-      };
-    }
-
-    // 각각 독립된 DB 경로에서 불러오기
-    fetchAndRenderRankings('60_normal', 'ranking-list-normal');
-    fetchAndRenderRankings('60_easy', 'ranking-list-easy');
-  } else {
-    // 다른 제한시간일 때: 탭 및 전용 리스트 숨기고 단일 리스트만 표시
+    // 만들어뒀던 탭 버튼과 불필요한 리스트들은 안 보이게 숨김 처리
+    const tabsContainer = document.getElementById('60s-tabs');
+    const listNormal = document.getElementById('ranking-list-normal');
+    const listEasy = document.getElementById('ranking-list-easy');
     if (tabsContainer) tabsContainer.style.display = 'none';
     if (listNormal) listNormal.style.display = 'none';
     if (listEasy) listEasy.style.display = 'none';
+
+    // 원래 사용하던 깔끔한 단일 리스트만 보여주기
+    const singleRankList = document.getElementById('rankList');
     if (singleRankList) singleRankList.style.display = 'block';
 
+    // 데이터 불러오기 (60, 180, unlimited 원래 폴더명 그대로 사용)
     fetchAndRenderRankings(timeLimit, 'rankList');
-  }
 }
-
 // 모드별 데이터를 가져와 랭킹 목록을 생성하는 공통 함수
 function fetchAndRenderRankings(pathKey, targetElementId) {
   const targetUl = document.getElementById(targetElementId);
