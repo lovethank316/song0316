@@ -261,46 +261,10 @@
         .status-item { display: flex; flex-direction: column; align-items: center; font-size: 14px; color: #64748b; font-weight: bold; }
         .status-value { font-size: 26px; font-weight: 900; color: var(--primary); margin-top: 4px; }
         
-        .input-area { display: flex; gap: 10px; margin-top: 20px; position: relative; }
+        .input-area { display: flex; gap: 10px; margin-top: 20px; }
         .input-area input { flex: 1; padding: 14px 16px; font-size: 16px; border: 2px solid #cbd5e1; border-radius: 12px; outline: none; }
         .input-area input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 75, 155, 0.15); }
         .input-area button { width: auto; margin: 0; padding: 0 24px; border-radius: 12px; }
-
-        /* 🌟 초성/단어 검색 자동완성 추천 UI 스타일 */
-        .suggestion-box {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            background: white;
-            border: 2px solid var(--primary);
-            border-top: none;
-            border-radius: 0 0 12px 12px;
-            max-height: 180px;
-            overflow-y: auto;
-            z-index: 100;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            box-sizing: border-box;
-        }
-        .suggestion-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            color: #475569;
-            border-bottom: 1px solid #f1f5f9;
-            text-align: left;
-            transition: all 0.2s;
-        }
-        .suggestion-item:last-child {
-            border-bottom: none;
-        }
-        .suggestion-item:hover {
-            background: #f0f7ff;
-            color: var(--primary);
-            padding-left: 20px;
-        }
 
         .rank-list { list-style: none; padding: 0; margin: 15px 0; max-height: 400px; overflow-y: auto; }
         .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; background: #f9fafb; margin-bottom: 8px; border-radius: 12px; }
@@ -347,6 +311,45 @@
 
 .tab-content.active {
   display: block;
+}
+
+/* 🌟 자동완성 검색 UI 스타일 */
+.input-area {
+    position: relative;
+}
+.suggestion-box {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: white;
+    border: 2px solid var(--primary);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+.suggestion-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+    transition: all 0.2s;
+}
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+.suggestion-item:hover {
+    background: #f0f7ff;
+    color: var(--primary);
+    padding-left: 20px;
 }
     </style>
 
@@ -487,7 +490,6 @@
             <div class="input-area">
                 <input type="text" id="answerInput" placeholder="정답을 입력하세요" autocomplete="off">
                 <button id="submitBtn" class="btn btn-start" style="margin-bottom: 0;">확인</button>
-                <!-- 🌟 초성 및 검색어 자동완성 추천 드롭다운 박스 -->
                 <div id="suggestionBox" class="suggestion-box"></div>
             </div>
             <div style="font-size: 12px; color: #94a3b8; margin-top: 8px; text-align: center;">* 띄어쓰기는 틀려도 글자만 맞으면 정답 처리됩니다.</div>
@@ -521,7 +523,7 @@
                 <button class="toggle-btn" data-time="unlimited" style="padding: 8px; font-size: 13px; flex-basis: 100%;">무제한</button>
             </div>
 
-            <!-- 👇 60초 전용 모드 선택 탭 위치 👇 -->
+            <!-- 👇 60초 전용 모드 선택 탭 추가 위치 👇 -->
 <div class="mode-tab-container" id="60s-tabs">
   <button class="tab-btn active" onclick="switchModeTab('normal', this)">일반모드</button>
   <button class="tab-btn" onclick="switchModeTab('easy', this)">쉬운모드</button>
@@ -536,7 +538,7 @@
 <div id="tab-easy" class="tab-content">
   <ul id="ranking-list-easy"></ul>
 </div>
-<!-- 👆 여기까지 👆 -->
+<!-- 👆 여기까지 추가 👆 -->
             
             <ul id="rankList" class="rank-list"></ul>
             <button id="closeRankBtn" class="btn btn-sub" style="margin-top: 15px;">메인 메뉴로 돌아가기</button>
@@ -988,7 +990,7 @@
             "하나님 성령님 부르면서 기도하여라", "하나님 성령님 없이는 못 살아요", "하나님 주신 말씀 맛있게", "할 일을 모두 마치고서"
         ];
 
-        // 쉬운 모드 플레이리스트를 동적으로 구축
+        // 쉬운 모드 플레이리스트를 동적으로 구축 (원본 리스트에 있으면 그 경로 사용, 없으면 part5로 기본 맵핑)
         const easyPlaylist = easySongTitles.map(title => {
             const found = playlist.find(song => song.title === title || song.title.includes(title));
             return {
@@ -1182,6 +1184,7 @@
             document.getElementById('answerInput').focus();
 
             audio.addEventListener('loadedmetadata', function onLoaded() {
+                // 🌟 무조건 2초부터 시작하도록 변경
                 if (audio.duration > 2) {
                     audio.currentTime = 2;
                 } else {
@@ -1217,6 +1220,8 @@
             }
         }
 
+        document.getElementById('submitBtn').addEventListener('click', checkAnswer);
+        
         // 🌟 초성 추출 함수
         function getChosung(str) {
             const cho = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
@@ -1229,7 +1234,7 @@
             return result;
         }
 
-        // 🌟 입력창 초성 / 부분 검색 자동완성 드롭다운 이벤트
+        // 🌟 검색어 입력 시 자동완성 목록 띄우기
         const answerInput = document.getElementById('answerInput');
         const suggestionBox = document.getElementById('suggestionBox');
 
@@ -1276,11 +1281,6 @@
             }
         });
 
-        document.getElementById('submitBtn').addEventListener('click', () => {
-            suggestionBox.style.display = 'none';
-            checkAnswer();
-        });
-
         answerInput.addEventListener('keydown', (e) => { 
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -1317,7 +1317,7 @@
         });
         document.getElementById('play30Btn').addEventListener('click', () => { 
             if (!audio.src) return;
-            audio.currentTime = 2;
+            audio.currentTime = 2; // 0초 대신 2초부터
             audio.play(); 
             setTimeout(() => { audio.pause(); }, 30000); 
         });
@@ -1351,10 +1351,10 @@
             };
             if (isUnlimited) dataToSave.timeSpent = unlimitedElapsed;
 
-      // 60초 제한시간일 때는 쉬운모드/일반모드 저장 경로 분리
+      // 60초 제한시간일 때는 쉬운모드/일반모드 저장 경로 분리 (변수 미선언 에러 방지)
 let savePath = 'rankings/' + selectedTime;
 if (String(selectedTime) === '60') {
-  const isEasy = (typeof selectedMode !== 'undefined' && selectedMode === 'easy');
+  const isEasy = (typeof isEasyMode !== 'undefined' && isEasyMode);
   savePath = isEasy ? 'rankings/60_easy' : 'rankings/60_normal';
 }
 
@@ -1381,16 +1381,20 @@ function loadRankings(timeLimit) {
   const listEasy = document.getElementById('ranking-list-easy');
   const singleRankList = document.getElementById('rankList');
 
+  // 탭 버튼 요소 가져오기
   const tabNormalBtn = document.getElementById('tab-normal');
   const tabEasyBtn = document.getElementById('tab-easy');
 
   if (timeLimit === '60') {
+    // 60초일 때: 탭 상자 보이기, 단일 리스트 숨기기
     if (tabsContainer) tabsContainer.style.display = 'flex';
     if (singleRankList) singleRankList.style.display = 'none';
 
+    // 기본 상태: 처음 창을 열면 일반모드 리스트만 보이기
     if (listNormal) listNormal.style.display = 'block';
     if (listEasy) listEasy.style.display = 'none';
 
+    // 일반모드 / 쉬운모드 버튼 클릭 시 화면 전환
     if (tabNormalBtn && tabEasyBtn) {
       tabNormalBtn.onclick = function() {
         listNormal.style.display = 'block';
@@ -1410,9 +1414,11 @@ function loadRankings(timeLimit) {
       };
     }
 
+    // 각각 독립된 DB 경로에서 불러오기
     fetchAndRenderRankings('60_normal', 'ranking-list-normal');
     fetchAndRenderRankings('60_easy', 'ranking-list-easy');
   } else {
+    // 다른 제한시간일 때: 탭 및 전용 리스트 숨기고 단일 리스트만 표시
     if (tabsContainer) tabsContainer.style.display = 'none';
     if (listNormal) listNormal.style.display = 'none';
     if (listEasy) listEasy.style.display = 'none';
@@ -1524,6 +1530,7 @@ function fetchAndRenderRankings(pathKey, targetElementId) {
             const song = playlist[index];
             studyAudio.src = song.src;
             
+            // 공부 모드에서도 무조건 2초부터 시작
             studyAudio.onloadedmetadata = function() {
                 if (studyAudio.duration > 2) studyAudio.currentTime = 2;
                 studyAudio.play().catch(e => console.log(e));
