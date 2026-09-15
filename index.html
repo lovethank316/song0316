@@ -1116,6 +1116,7 @@
         let isUnlimited = false;
         let unlimitedElapsed = 0; 
         let lastEmptySubmitTime = 0; 
+        let playTimeout = null; // 🌟 7초 자동 멈춤 타이머 변수
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -1192,6 +1193,13 @@
                 }
                 audio.play().catch(e => console.log("재생 오류", e));
                 audio.removeEventListener('loadedmetadata', onLoaded);
+
+                // 🌟 재생 시작 시 정확히 7초 후 자동 일시정지 타이머 세팅
+                clearTimeout(playTimeout);
+                playTimeout = setTimeout(() => {
+                    audio.pause();
+                    document.getElementById('pauseBtn').textContent = '▶️ 재생';
+                }, 7000);
             });
         }
 
@@ -1234,7 +1242,7 @@
             return result;
         }
 
-        // 🌟 검색어 입력 시 자동완성 목록 띄우기
+        // 🌟 검색어 입력 시 자동완성 목록 띄우기 (시작 위치 startsWith 기준으로 변경)
         const answerInput = document.getElementById('answerInput');
         const suggestionBox = document.getElementById('suggestionBox');
 
@@ -1253,7 +1261,8 @@
                 const titleNoSpace = title.replace(/\s/g, '').toLowerCase();
                 const titleCho = getChosung(titleNoSpace);
                 const valCho = getChosung(val);
-                return titleNoSpace.includes(val) || titleCho.includes(valCho);
+                // 🌟 startsWith를 사용하여 곡 제목이나 초성의 '맨 처음'부터 일치할 때만 검색되도록 수정
+                return titleNoSpace.startsWith(val) || titleCho.startsWith(valCho);
             });
 
             if (matched.length > 0) {
@@ -1263,10 +1272,11 @@
                     div.className = 'suggestion-item';
                     div.innerHTML = `🎵 ${title}`;
                     
+                    // 🌟 클릭 시 바로 정답제출(checkAnswer)하지 않고, 입력창에 값만 채운 후 엔터/확인을 누르도록 수정
                     div.onclick = function() {
                         answerInput.value = title;
                         suggestionBox.style.display = 'none';
-                        checkAnswer();
+                        answerInput.focus();
                     };
                     suggestionBox.appendChild(div);
                 });
@@ -1296,7 +1306,9 @@
         });
 
         function endGame() {
-            clearInterval(timerInterval); audio.pause();
+            clearInterval(timerInterval); 
+            clearTimeout(playTimeout);
+            audio.pause();
             let timeText = "";
             if (isUnlimited) {
                 const m = Math.floor(unlimitedElapsed / 60); const s = unlimitedElapsed % 60;
@@ -1311,21 +1323,51 @@
         document.getElementById('backToStartBtn').addEventListener('click', () => showScreen('startScreen'));
         document.getElementById('restartBtn').addEventListener('click', () => showScreen('startScreen'));
         document.getElementById('volumeSlider').addEventListener('input', (e) => { audio.volume = e.target.value; });
+        
+        // 🌟 일시정지 / 재생 버튼 클릭 로직 수정 (재생 클릭 시 2초 시점부터 다시 7초간 재생)
         document.getElementById('pauseBtn').addEventListener('click', (e) => {
-            if (audio.paused) { audio.play(); e.target.textContent = '⏸️ 일시정지'; }
-            else { audio.pause(); e.target.textContent = '▶️ 재생'; }
+            if (audio.paused) { 
+                if (audio.duration > 2) {
+                    audio.currentTime = 2; // 재생 버튼 클릭 시 2초부터 다시 재생
+                } else {
+                    audio.currentTime = 0;
+                }
+                audio.play(); 
+                e.target.textContent = '⏸️ 일시정지'; 
+                
+                clearTimeout(playTimeout);
+                playTimeout = setTimeout(() => {
+                    audio.pause();
+                    e.target.textContent = '▶️ 재생';
+                }, 7000);
+            }
+            else { 
+                audio.pause(); 
+                clearTimeout(playTimeout);
+                e.target.textContent = '▶️ 재생'; 
+            }
         });
         document.getElementById('play30Btn').addEventListener('click', () => { 
             if (!audio.src) return;
+            clearTimeout(playTimeout);
             audio.currentTime = 2; // 0초 대신 2초부터
             audio.play(); 
-            setTimeout(() => { audio.pause(); }, 30000); 
+            document.getElementById('pauseBtn').textContent = '⏸️ 일시정지';
+            playTimeout = setTimeout(() => { 
+                audio.pause(); 
+                document.getElementById('pauseBtn').textContent = '▶️ 재생';
+            }, 30000); 
         });
         document.getElementById('btn-middle-listen').addEventListener('click', () => { 
             if (!audio.src) return; 
+            clearTimeout(playTimeout);
             audio.currentTime = audio.duration / 2; 
             audio.play(); 
-            setTimeout(() => { audio.pause(); }, 10000); 
+            document.getElementById('pauseBtn').textContent = '⏸️ 일시정지';
+            playTimeout = setTimeout(() => { 
+                audio.pause(); 
+                document.getElementById('pauseBtn').textContent = '▶️ 재생';
+            }, 10000); 
         });
         document.getElementById('hintBtn').addEventListener('click', () => {
             const title = shuffledPlaylist[currentSongIndex].title;
